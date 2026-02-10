@@ -2,13 +2,30 @@ import type { Request, Response } from 'express'
 import * as playerService from '../services/player.service.js'
 import { z } from 'zod'
 
+const MAX_AVATAR_BASE64_LENGTH = 500_000 // ~375KB em base64
+
+const avatarSchema = z
+  .string()
+  .optional()
+  .nullable()
+  .transform((s) => (s === '' || s == null ? null : s))
+  .refine(
+    (s) => {
+      if (s == null) return true
+      if (s.startsWith('data:image/') && s.includes(';base64,')) {
+        return s.length <= MAX_AVATAR_BASE64_LENGTH
+      }
+      if (s.startsWith('http://') || s.startsWith('https://')) {
+        return s.length <= 2000
+      }
+      return false
+    },
+    { message: 'Avatar deve ser uma URL (http/https) ou imagem em base64 (até ~375KB)' }
+  )
+
 const createPlayerSchema = z.object({
   name: z.string().min(1).max(200),
-  avatarUrl: z
-    .union([z.string().url(), z.literal('')])
-    .optional()
-    .nullable()
-    .transform((s) => (s === '' || s == null ? null : s)),
+  avatarUrl: avatarSchema,
   stars: z.number().int().min(1).max(5),
   pass: z.number().int().min(1).max(5),
   shot: z.number().int().min(1).max(5),

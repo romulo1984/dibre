@@ -29,7 +29,7 @@ model User {
 model Player {
   id          String   @id @default(cuid())
   name        String
-  avatarUrl   String?  // optional photo/avatar URL
+  avatarUrl   String?  @db.MediumText // URL ou data URL (base64) da foto/avatar
   stars       Int      // 1-5 overall level
   pass        Int      // 1-5
   shot        Int      // 1-5
