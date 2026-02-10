@@ -1,20 +1,29 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+type Size = 'sm' | 'md' | 'lg'
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600',
+    'bg-[var(--color-brand-600)] text-white hover:bg-[var(--color-brand-700)] shadow-[var(--shadow-xs)]',
   secondary:
-    'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700',
+    'bg-[var(--surface-tertiary)] text-[var(--text-primary)] hover:bg-[var(--border-primary)] shadow-[var(--shadow-xs)]',
   outline:
-    'border border-neutral-300 bg-transparent hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800',
-  ghost: 'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-  danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600',
+    'border border-[var(--border-secondary)] bg-transparent text-[var(--text-primary)] hover:bg-[var(--surface-tertiary)]',
+  ghost: 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
+  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-[var(--shadow-xs)]',
+}
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'h-8 px-3 text-xs gap-1.5 rounded-[var(--radius-md)]',
+  md: 'h-9 px-4 text-sm gap-2 rounded-[var(--radius-lg)]',
+  lg: 'h-11 px-6 text-sm gap-2 rounded-[var(--radius-lg)]',
 }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
+  size?: Size
   children: ReactNode
   className?: string
   loading?: boolean
@@ -22,6 +31,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function Button({
   variant = 'primary',
+  size = 'md',
   children,
   className = '',
   loading,
@@ -31,7 +41,14 @@ export function Button({
   return (
     <button
       type="button"
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${variantClasses[variant]} ${className}`}
+      className={cn(
+        'inline-flex cursor-pointer items-center justify-center font-medium transition-all duration-150',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-500)]',
+        'disabled:pointer-events-none disabled:opacity-50',
+        variantClasses[variant],
+        sizeClasses[size],
+        className,
+      )}
       disabled={disabled ?? loading}
       {...props}
     >

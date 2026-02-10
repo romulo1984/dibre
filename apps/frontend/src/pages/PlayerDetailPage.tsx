@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { PageHeader } from '../components/ui/PageHeader/PageHeader.js'
-import { Button } from '../components/ui/Button/Button.js'
-import { Card } from '../components/ui/Card/Card.js'
-import { PlayerProfileStats } from '../features/players/PlayerProfileStats.js'
-import { getPlayer } from '../services/players.service.js'
-import type { PlayerWithParticipation } from '../domain/types.js'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { Button } from '@/components/ui/Button/Button'
+import { Card } from '@/components/ui/Card/Card'
+import { PlayerProfileStats } from '@/features/players/PlayerProfileStats'
+import { getPlayer } from '@/services/players.service'
+import type { PlayerWithParticipation } from '@/domain/types'
+import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -35,11 +36,25 @@ export function PlayerDetailPage() {
   }, [id])
 
   if (!id) return null
-  if (loading) return <p className="text-neutral-600 dark:text-neutral-400">Carregando...</p>
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="flex flex-col items-center gap-3">
+          <span className="size-8 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
+          <p className="text-sm text-[var(--text-tertiary)]">Carregando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (error || !data) {
     return (
-      <div className="rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
-        {error ?? 'Jogador não encontrado'}
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-900/20">
+        <span className="mb-2 text-3xl">😕</span>
+        <p className="font-medium text-red-700 dark:text-red-400">
+          {error ?? 'Jogador não encontrado'}
+        </p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/players')}>
           Voltar
         </Button>
@@ -49,21 +64,23 @@ export function PlayerDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader.Root>
-        <div>
-          <PageHeader.Title>{data.player.name}</PageHeader.Title>
-          <PageHeader.Description>Perfil e estatísticas do jogador</PageHeader.Description>
-        </div>
-        {isSignedIn && (
-          <PageHeader.Actions>
-            <Link to={`/players/${id}/edit`}>
-              <Button variant="outline">Editar</Button>
-            </Link>
-          </PageHeader.Actions>
-        )}
-      </PageHeader.Root>
+      <BlurFade delay={0.1}>
+        <PageHeader.Root>
+          <div>
+            <PageHeader.Title>{data.player.name}</PageHeader.Title>
+            <PageHeader.Description>Perfil e estatísticas do jogador</PageHeader.Description>
+          </div>
+          {isSignedIn && (
+            <PageHeader.Actions>
+              <Link to={`/players/${id}/edit`}>
+                <Button variant="outline">Editar</Button>
+              </Link>
+            </PageHeader.Actions>
+          )}
+        </PageHeader.Root>
+      </BlurFade>
       <Card.Root>
-        <Card.Content>
+        <Card.Content className="p-6 sm:p-8">
           <PlayerProfileStats player={data.player} participationCount={data.participationCount} />
         </Card.Content>
       </Card.Root>

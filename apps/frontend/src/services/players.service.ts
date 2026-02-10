@@ -1,5 +1,5 @@
-import type { Player, PlayerWithParticipation } from '../domain/types.js'
-import { api } from './api.js'
+import type { Player, PlayerWithParticipation } from '@/domain/types'
+import { api } from '@/services/api'
 
 export async function listPlayers(): Promise<Player[]> {
   return api.get<Player[]>('/players')

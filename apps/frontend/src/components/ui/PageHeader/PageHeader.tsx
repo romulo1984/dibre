@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 export interface PageHeaderComposition {
   Root: typeof Root
@@ -10,7 +11,7 @@ export interface PageHeaderComposition {
 function Root({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <header
-      className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${className}`}
+      className={cn('flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', className)}
     >
       {children}
     </header>
@@ -19,18 +20,18 @@ function Root({ children, className = '' }: { children: ReactNode; className?: s
 
 function Title({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <h1 className={`text-2xl font-bold text-neutral-900 dark:text-white ${className}`}>
+    <h1 className={cn('text-2xl font-bold tracking-tight text-[var(--text-primary)]', className)}>
       {children}
     </h1>
   )
 }
 
 function Description({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <p className={`text-sm text-neutral-600 dark:text-neutral-400 ${className}`}>{children}</p>
+  return <p className={cn('text-sm text-[var(--text-tertiary)]', className)}>{children}</p>
 }
 
 function Actions({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`flex shrink-0 items-center gap-2 ${className}`}>{children}</div>
+  return <div className={cn('flex shrink-0 items-center gap-2', className)}>{children}</div>
 }
 
 export const PageHeader: PageHeaderComposition = {

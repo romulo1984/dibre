@@ -130,3 +130,26 @@ Tanto para Backend quanto para Frontend, usar o Node 24 (usando .nvmrc para gara
 ## Objetivo Final
 
 Gerar um projeto completo, moderno, modular, escalável e pronto para rodar localmente e em produção, com foco em clareza arquitetural, organização profissional e algoritmo inteligente de balanceamento de times.
+
+
+## Melhorias
+Iterface:
+
+- No cadastro de uma pelada, deixar na interface um input de seleção de data (apenas dia, mês e ano), e ao salvar, criar o nome da pelada como "Pelada do dia x de Janeiro de x", obviamente formatando corretamente com as libs de formatação do javascript;
+- Na lista de selecionar jogadores, ter uma opção de marcar todos
+- Na hora de escolher as estrelas de um jogador (editar), fazer um slider de estrelas, onde ao tocar na estrela (por exemplo, estrela 3), define aquele número de estrelas. Para os outros atributos, manter.
+
+
+
+## Próximo prompt
+Analise todo o projeto da parte de frontend (apps/frontend) e refatore tudo, agora usando as bibliotecas de componentes Magic UI e Untitled UI para os componentes de interface.
+
+Considere as seguintes especificações:
+
+- Use a biblioteca Magic UI: install guide disponível em https://magicui.design/docs/installation;
+- Use a biblioteca Untitled UI: install guide disponível em https://www.untitledui.com/react/integrations/vite;
+- Para manter consistência visual, use tokens semânticos para os estilos, variáveis css (scss), ou qualquer outra coisa relacionada ao tema;
+- Na página principal, crie uma landing page bem moderna e impressionante, se utilizando bastante dos componentes do Magic UI;
+- Tente usar componentes visuais mais impressionantes (por exemplo, do Magic UI), para locais onde precisa de um refinamento visual mais amplo, tipo nos cards dos players, landing page, logo, etc. E use o Untitled UI para os componentes mais usuais e de experiência do usuário;
+- Ao refatorar a interface, tente manter o Composition Pattern, porém, dê preferência com componentes puros usados da forma como são providos por suas bibliotecas (Magic UI e Untitled UI);
+- No geral, deixe a interface mais bonita e com uma ótima experiência, mudando inclusive, se necessário, alguns tipos de interação com a api.

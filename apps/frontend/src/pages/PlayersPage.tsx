@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { PageHeader } from '../components/ui/PageHeader/PageHeader.js'
-import { Button } from '../components/ui/Button/Button.js'
-import { PlayerList } from '../features/players/PlayerList.js'
-import { listPlayers } from '../services/players.service.js'
-import type { Player } from '../domain/types.js'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { Button } from '@/components/ui/Button/Button'
+import { PlayerList } from '@/features/players/PlayerList'
+import { listPlayers } from '@/services/players.service'
+import type { Player } from '@/domain/types'
+import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PlayersPage() {
   const { isSignedIn } = useAuth()
@@ -32,28 +33,37 @@ export function PlayersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader.Root>
-        <div>
-          <PageHeader.Title>Jogadores</PageHeader.Title>
-          <PageHeader.Description>
-            Lista de jogadores com estrelas e atributos. Clique para ver o perfil.
-          </PageHeader.Description>
-        </div>
-        {isSignedIn && (
-          <PageHeader.Actions>
-            <Link to="/players/new">
-              <Button variant="primary">Novo jogador</Button>
-            </Link>
-          </PageHeader.Actions>
-        )}
-      </PageHeader.Root>
+      <BlurFade delay={0.1}>
+        <PageHeader.Root>
+          <div>
+            <PageHeader.Title>Jogadores</PageHeader.Title>
+            <PageHeader.Description>
+              Lista de jogadores com estrelas e atributos. Clique para ver o perfil.
+            </PageHeader.Description>
+          </div>
+          {isSignedIn && (
+            <PageHeader.Actions>
+              <Link to="/players/new">
+                <Button variant="primary">Novo jogador</Button>
+              </Link>
+            </PageHeader.Actions>
+          )}
+        </PageHeader.Root>
+      </BlurFade>
+
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <span>⚠️</span> {error}
         </div>
       )}
+
       {loading ? (
-        <p className="text-neutral-600 dark:text-neutral-400">Carregando...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-3">
+            <span className="size-8 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
+            <p className="text-sm text-[var(--text-tertiary)]">Carregando jogadores...</p>
+          </div>
+        </div>
       ) : (
         <PlayerList players={players} />
       )}

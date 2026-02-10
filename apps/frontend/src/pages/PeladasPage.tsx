@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { PageHeader } from '../components/ui/PageHeader/PageHeader.js'
-import { Button } from '../components/ui/Button/Button.js'
-import { GameList } from '../features/games/GameList.js'
-import { listGames } from '../services/games.service.js'
-import type { Game } from '../domain/types.js'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { Button } from '@/components/ui/Button/Button'
+import { GameList } from '@/features/games/GameList'
+import { listGames } from '@/services/games.service'
+import type { Game } from '@/domain/types'
+import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PeladasPage() {
   const { isSignedIn } = useAuth()
@@ -32,28 +33,37 @@ export function PeladasPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader.Root>
-        <div>
-          <PageHeader.Title>Peladas</PageHeader.Title>
-          <PageHeader.Description>
-            Crie peladas, selecione jogadores e execute o sorteio equilibrado.
-          </PageHeader.Description>
-        </div>
-        {isSignedIn && (
-          <PageHeader.Actions>
-            <Link to="/peladas/new">
-              <Button variant="primary">Nova pelada</Button>
-            </Link>
-          </PageHeader.Actions>
-        )}
-      </PageHeader.Root>
+      <BlurFade delay={0.1}>
+        <PageHeader.Root>
+          <div>
+            <PageHeader.Title>Peladas</PageHeader.Title>
+            <PageHeader.Description>
+              Crie peladas, selecione jogadores e execute o sorteio equilibrado.
+            </PageHeader.Description>
+          </div>
+          {isSignedIn && (
+            <PageHeader.Actions>
+              <Link to="/peladas/new">
+                <Button variant="primary">Nova pelada</Button>
+              </Link>
+            </PageHeader.Actions>
+          )}
+        </PageHeader.Root>
+      </BlurFade>
+
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+        <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <span>⚠️</span> {error}
         </div>
       )}
+
       {loading ? (
-        <p className="text-neutral-600 dark:text-neutral-400">Carregando...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="flex flex-col items-center gap-3">
+            <span className="size-8 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
+            <p className="text-sm text-[var(--text-tertiary)]">Carregando peladas...</p>
+          </div>
+        </div>
       ) : (
         <GameList games={games} />
       )}

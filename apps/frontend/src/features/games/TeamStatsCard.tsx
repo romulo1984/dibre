@@ -1,5 +1,7 @@
-import type { TeamAssignment } from '../../domain/types.js'
-import { Card } from '../../components/ui/Card/Card.js'
+import type { TeamAssignment } from '@/domain/types'
+import { Card } from '@/components/ui/Card/Card'
+import { BorderBeam } from '@/components/magicui/border-beam'
+import { cn } from '@/lib/utils'
 
 interface TeamStatsCardProps {
   team: TeamAssignment
@@ -17,52 +19,72 @@ const attrs = [
 
 export function TeamStatsCard({ team, playerNames }: TeamStatsCardProps) {
   return (
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>{team.teamName}</Card.Title>
-      </Card.Header>
-      <Card.Content className="space-y-4">
-        <div>
-          <h4 className="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">
-            Jogadores
-          </h4>
-          <ul className="list-inside list-disc space-y-1 text-sm">
-            {team.playerIds.map((id) => {
-              const name = playerNames.get(id) ?? id
-              const is5 = (team.playerIdsWith5Stars ?? []).includes(id)
-              const is1 = (team.playerIdsWith1Star ?? []).includes(id)
-              return (
-                <li key={id} className="flex items-center gap-2">
-                  <span>{name}</span>
-                  {is5 && (
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                      5★
-                    </span>
-                  )}
-                  {is1 && (
-                    <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300">
-                      1★
-                    </span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-        <div>
-          <h4 className="mb-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">
-            Médias
-          </h4>
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            {attrs.map(({ key, label }) => (
-              <div key={key} className="flex justify-between">
-                <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
-                <span className="font-medium">{team[key].toFixed(2)}</span>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </Card.Content>
-    </Card.Root>
+    <div className="relative overflow-hidden rounded-[var(--radius-xl)]">
+      <Card.Root className="relative overflow-hidden">
+        <BorderBeam size={200} duration={8} delay={0} />
+        <Card.Header>
+          <Card.Title className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-brand-500)] to-[var(--color-brand-700)] text-xs font-bold text-white">
+              {team.order}
+            </span>
+            {team.teamName}
+          </Card.Title>
+        </Card.Header>
+        <Card.Content className="space-y-4">
+          {/* Players */}
+          <div>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+              Jogadores ({team.playerIds.length})
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {team.playerIds.map((id) => {
+                const name = playerNames.get(id) ?? id
+                const is5 = (team.playerIdsWith5Stars ?? []).includes(id)
+                const is1 = (team.playerIdsWith1Star ?? []).includes(id)
+                return (
+                  <span
+                    key={id}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
+                      is5
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                        : is1
+                          ? 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300'
+                          : 'bg-[var(--surface-tertiary)] text-[var(--text-secondary)]',
+                    )}
+                  >
+                    {name}
+                    {is5 && <span>5★</span>}
+                    {is1 && <span>1★</span>}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Averages */}
+          <div>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+              Médias
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              {attrs.map(({ key, label }) => (
+                <div
+                  key={key}
+                  className="rounded-lg bg-[var(--surface-secondary)] p-2 text-center"
+                >
+                  <span className="block text-[10px] font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+                    {label}
+                  </span>
+                  <span className="mt-0.5 block text-sm font-bold text-[var(--color-brand-600)]">
+                    {team[key].toFixed(1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    </div>
   )
 }
