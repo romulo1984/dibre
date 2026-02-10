@@ -1,0 +1,47 @@
+import type { Player, PlayerWithParticipation } from '../domain/types.js'
+import { api } from './api.js'
+
+export async function listPlayers(): Promise<Player[]> {
+  return api.get<Player[]>('/players')
+}
+
+export async function getPlayer(id: string): Promise<PlayerWithParticipation> {
+  return api.get<PlayerWithParticipation>(`/players/${id}`)
+}
+
+export async function createPlayer(
+  data: {
+    name: string
+    avatarUrl?: string | null
+    stars: number
+    pass: number
+    shot: number
+    defense: number
+    energy: number
+    speed: number
+  },
+  token: string
+): Promise<Player> {
+  return api.post<Player>('/players', data, token)
+}
+
+export async function updatePlayer(
+  id: string,
+  data: Partial<{
+    name: string
+    avatarUrl: string | null
+    stars: number
+    pass: number
+    shot: number
+    defense: number
+    energy: number
+    speed: number
+  }>,
+  token: string
+): Promise<Player> {
+  return api.patch<Player>(`/players/${id}`, data, token)
+}
+
+export async function deletePlayer(id: string, token: string): Promise<void> {
+  return api.delete(`/players/${id}`, token)
+}

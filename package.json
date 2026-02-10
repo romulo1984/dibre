@@ -1,0 +1,26 @@
+{
+  "name": "dibre",
+  "private": true,
+  "description": "Sistema de avaliação de atletas e sorteio equilibrado de times para pelada",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "build": "pnpm run -r build",
+    "build:backend": "pnpm --filter backend build",
+    "build:frontend": "pnpm --filter frontend build",
+    "lint": "pnpm run -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "db:generate": "pnpm --filter backend db:generate",
+    "db:migrate": "pnpm --filter backend db:migrate",
+    "db:push": "pnpm --filter backend db:push",
+    "db:studio": "pnpm --filter backend db:studio"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@9.14.2",
+  "devDependencies": {
+    "prettier": "^3.4.0"
+  }
+}
