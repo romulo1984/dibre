@@ -1,20 +1,26 @@
 import type { Game, TeamAssignment } from '@/domain/types'
 import { api } from '@/services/api'
 
-export async function listGames(): Promise<Game[]> {
-  return api.get<Game[]>('/games')
+export async function listGames(token: string): Promise<Game[]> {
+  return api.get<Game[]>('/games', token)
 }
 
-export async function getGame(id: string): Promise<Game> {
-  return api.get<Game>(`/games/${id}`)
+export async function getGame(id: string, token: string): Promise<Game> {
+  return api.get<Game>(`/games/${id}`, token)
 }
 
-export async function getGamePlayers(id: string): Promise<{ playerIds: string[] }> {
-  return api.get<{ playerIds: string[] }>(`/games/${id}/players`)
+export async function getGamePlayers(
+  id: string,
+  token: string
+): Promise<{ playerIds: string[] }> {
+  return api.get<{ playerIds: string[] }>(`/games/${id}/players`, token)
 }
 
-export async function getGameTeams(id: string): Promise<{ teams: TeamAssignment[] }> {
-  return api.get<{ teams: TeamAssignment[] }>(`/games/${id}/teams`)
+export async function getGameTeams(
+  id: string,
+  token: string
+): Promise<{ teams: TeamAssignment[] }> {
+  return api.get<{ teams: TeamAssignment[] }>(`/games/${id}/teams`, token)
 }
 
 export async function createGame(

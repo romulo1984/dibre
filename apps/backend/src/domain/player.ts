@@ -14,6 +14,7 @@ export interface PlayerEntity extends PlayerAttributes {
   id: string
   name: string
   avatarUrl: string | null
+  createdById: string | null
   createdAt: Date
   updatedAt: Date
 }

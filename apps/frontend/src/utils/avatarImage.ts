@@ -4,7 +4,6 @@
  */
 
 const DEFAULT_SIZE = 256
-const DEFAULT_QUALITY = 0.75
 const MAX_DATA_URL_LENGTH = 480_000 // ~360KB; backend aceita até 500k
 
 function loadImage(file: File): Promise<HTMLImageElement> {

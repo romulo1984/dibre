@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@clerk/clerk-react'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
 import { TeamStatsCard } from '@/features/games/TeamStatsCard'
+import { PlayerRow } from '@/features/players/PlayerRow'
 import { ShimmerButton } from '@/components/magicui/shimmer-button'
 import { BlurFade } from '@/components/magicui/blur-fade'
 import { cn } from '@/lib/utils'
@@ -22,7 +22,6 @@ import type { Game, TeamAssignment, Player } from '@/domain/types'
 export function PeladaDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isSignedIn } = useAuth()
   const getToken = useAuthToken()
   const [game, setGame] = useState<Game | null>(null)
   const [playerIds, setPlayerIds] = useState<string[]>([])
@@ -35,9 +34,19 @@ export function PeladaDetailPage() {
   useEffect(() => {
     if (!id) return
     let cancelled = false
-    Promise.all([getGame(id), getGamePlayers(id), getGameTeams(id), listPlayers()])
-      .then(([g, playersRes, teamsRes, players]) => {
-        if (!cancelled) {
+    getToken()
+      .then((token) => {
+        if (cancelled || !token) return
+        return Promise.all([
+          getGame(id, token),
+          getGamePlayers(id, token),
+          getGameTeams(id, token),
+          listPlayers(token),
+        ])
+      })
+      .then((result) => {
+        if (!cancelled && result) {
+          const [g, playersRes, teamsRes, players] = result
           setGame(g)
           setPlayerIds(playersRes.playerIds)
           setTeams(teamsRes.teams)
@@ -53,12 +62,12 @@ export function PeladaDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, getToken])
 
-  const playerNames = new Map(allPlayers.map((p) => [p.id, p.name]))
+  const playersMap = new Map(allPlayers.map((p) => [p.id, p]))
 
   const handleSetPlayers = async (selectedIds: string[]) => {
-    if (!id || !isSignedIn) return
+    if (!id) return
     const token = await getToken()
     if (!token) return
     try {
@@ -70,7 +79,7 @@ export function PeladaDetailPage() {
   }
 
   const handleRunDraw = async () => {
-    if (!id || !isSignedIn) return
+    if (!id) return
     const token = await getToken()
     if (!token) return
     setDrawLoading(true)
@@ -121,8 +130,7 @@ export function PeladaDetailPage() {
               {game.numberOfTeams} time(s) · {playerIds.length} jogador(es) selecionado(s)
             </PageHeader.Description>
           </div>
-          {isSignedIn && (
-            <PageHeader.Actions>
+          <PageHeader.Actions>
               <ShimmerButton
                 className="h-10 px-5 text-sm font-semibold shadow-lg disabled:opacity-50"
                 disabled={playerIds.length < game.numberOfTeams || drawLoading}
@@ -137,8 +145,7 @@ export function PeladaDetailPage() {
                   '🎲 Executar sorteio'
                 )}
               </ShimmerButton>
-            </PageHeader.Actions>
-          )}
+          </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
 
@@ -148,46 +155,21 @@ export function PeladaDetailPage() {
         </div>
       )}
 
-      {/* Player Selection (Admin) */}
-      {isSignedIn && (
-        <BlurFade delay={0.2}>
-          <Card.Root>
-            <Card.Header>
-              <Card.Title>Selecionar jogadores</Card.Title>
-            </Card.Header>
-            <Card.Content>
-              <PeladaPlayerSelect
-                allPlayers={allPlayers}
-                selectedIds={playerIds}
-                onChange={handleSetPlayers}
-              />
-            </Card.Content>
-          </Card.Root>
-        </BlurFade>
-      )}
-
-      {/* Player List (Viewer) */}
-      {!isSignedIn && playerIds.length > 0 && (
-        <BlurFade delay={0.2}>
-          <Card.Root>
-            <Card.Header>
-              <Card.Title>Jogadores nesta pelada</Card.Title>
-            </Card.Header>
-            <Card.Content>
-              <div className="flex flex-wrap gap-2">
-                {playerIds.map((pid) => (
-                  <span
-                    key={pid}
-                    className="inline-flex rounded-full bg-[var(--surface-tertiary)] px-3 py-1 text-sm font-medium text-[var(--text-secondary)]"
-                  >
-                    {playerNames.get(pid) ?? pid}
-                  </span>
-                ))}
-              </div>
-            </Card.Content>
-          </Card.Root>
-        </BlurFade>
-      )}
+      {/* Seleção de jogadores */}
+      <BlurFade delay={0.2}>
+        <Card.Root>
+          <Card.Header>
+            <Card.Title>Selecionar jogadores</Card.Title>
+          </Card.Header>
+          <Card.Content>
+            <PeladaPlayerSelect
+              allPlayers={allPlayers}
+              selectedIds={playerIds}
+              onChange={handleSetPlayers}
+            />
+          </Card.Content>
+        </Card.Root>
+      </BlurFade>
 
       {/* Teams & Stats */}
       {teams.length > 0 && (
@@ -200,7 +182,7 @@ export function PeladaDetailPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((team, i) => (
               <BlurFade key={team.teamName} delay={0.35 + i * 0.08}>
-                <TeamStatsCard team={team} playerNames={playerNames} />
+                <TeamStatsCard team={team} playersMap={playersMap} />
               </BlurFade>
             ))}
           </div>
@@ -210,7 +192,7 @@ export function PeladaDetailPage() {
   )
 }
 
-/* ── Internal: Player checkbox selector ── */
+/* ── Internal: Player checkbox selector (lista vertical, avatar, selecionar todos) ── */
 
 function PeladaPlayerSelect({
   allPlayers,
@@ -222,6 +204,8 @@ function PeladaPlayerSelect({
   onChange: (ids: string[]) => Promise<void>
 }) {
   const [saving, setSaving] = useState(false)
+  const allSelected = allPlayers.length > 0 && selectedIds.length === allPlayers.length
+
   const toggle = (playerId: string) => {
     const next = selectedIds.includes(playerId)
       ? selectedIds.filter((pid) => pid !== playerId)
@@ -230,29 +214,71 @@ function PeladaPlayerSelect({
     onChange(next).finally(() => setSaving(false))
   }
 
+  const selectAll = () => {
+    const next = allPlayers.map((p) => p.id)
+    setSaving(true)
+    onChange(next).finally(() => setSaving(false))
+  }
+
+  const deselectAll = () => {
+    setSaving(true)
+    onChange([]).finally(() => setSaving(false))
+  }
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {allPlayers.map((p) => {
-        const isSelected = selectedIds.includes(p.id)
-        return (
+    <div className="space-y-3">
+      {allPlayers.length > 0 && (
+        <div className="flex gap-2">
           <button
-            key={p.id}
             type="button"
             disabled={saving}
-            onClick={() => toggle(p.id)}
+            onClick={allSelected ? deselectAll : selectAll}
             className={cn(
-              'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all',
-              isSelected
-                ? 'border-[var(--color-brand-500)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] shadow-sm'
-                : 'border-[var(--border-primary)] bg-[var(--surface-primary)] text-[var(--text-secondary)] hover:border-[var(--border-secondary)] hover:bg-[var(--surface-tertiary)]',
+              'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+              allSelected
+                ? 'border-[var(--border-primary)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)]'
+                : 'border-[var(--color-brand-500)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] hover:bg-[var(--color-brand-100)]',
               saving && 'opacity-60',
             )}
           >
-            {isSelected && <span className="text-[var(--color-brand-500)]">✓</span>}
-            {p.name}
+            {allSelected ? 'Desmarcar todos' : 'Selecionar todos'}
           </button>
-        )
-      })}
+        </div>
+      )}
+      <ul className="flex max-h-[320px] flex-col gap-0.5 overflow-y-auto rounded-lg border border-[var(--border-primary)] p-1.5">
+        {allPlayers.map((p) => {
+          const isSelected = selectedIds.includes(p.id)
+          return (
+            <li key={p.id}>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => toggle(p.id)}
+                className={cn(
+                  'w-full cursor-pointer rounded-lg text-left transition-colors',
+                  isSelected
+                    ? 'bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-100)] dark:bg-[var(--color-brand-900)]'
+                    : 'hover:bg-[var(--surface-tertiary)]',
+                  saving && 'opacity-60',
+                )}
+              >
+                <PlayerRow player={p}>
+                  <span
+                    className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded border text-xs font-medium',
+                      isSelected
+                        ? 'border-[var(--color-brand-500)] bg-[var(--color-brand-500)] text-white'
+                        : 'border-[var(--border-primary)] bg-[var(--surface-primary)]',
+                    )}
+                  >
+                    {isSelected ? '✓' : ''}
+                  </span>
+                </PlayerRow>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
       {allPlayers.length === 0 && (
         <p className="text-sm text-[var(--text-tertiary)]">
           Nenhum jogador cadastrado.{' '}

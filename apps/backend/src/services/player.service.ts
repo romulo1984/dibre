@@ -2,33 +2,37 @@ import type { PlayerEntity } from '../domain/player.js'
 import { STAR_MIN, STAR_MAX, validateAttributes } from '../domain/player.js'
 import * as playerRepo from '../repositories/player.repository.js'
 
-export async function listPlayers(): Promise<PlayerEntity[]> {
-  return playerRepo.findAllPlayers()
+export async function listPlayers(ownerId: string): Promise<PlayerEntity[]> {
+  return playerRepo.findAllPlayersByOwner(ownerId)
 }
 
-export async function getPlayerById(id: string): Promise<PlayerEntity | null> {
-  return playerRepo.findPlayerById(id)
+export async function getPlayerById(id: string, ownerId: string): Promise<PlayerEntity | null> {
+  return playerRepo.findPlayerByIdForOwner(id, ownerId)
 }
 
 export async function getPlayerWithParticipationCount(
-  id: string
+  id: string,
+  ownerId: string
 ): Promise<{ player: PlayerEntity; participationCount: number } | null> {
-  const player = await playerRepo.findPlayerById(id)
+  const player = await playerRepo.findPlayerByIdForOwner(id, ownerId)
   if (!player) return null
   const participationCount = await playerRepo.countParticipations(id)
   return { player, participationCount }
 }
 
-export async function createPlayer(data: {
-  name: string
-  avatarUrl?: string | null
-  stars: number
-  pass: number
-  shot: number
-  defense: number
-  energy: number
-  speed: number
-}): Promise<{ error?: string; player?: PlayerEntity }> {
+export async function createPlayer(
+  data: {
+    name: string
+    avatarUrl?: string | null
+    stars: number
+    pass: number
+    shot: number
+    defense: number
+    energy: number
+    speed: number
+  },
+  ownerId: string
+): Promise<{ error?: string; player?: PlayerEntity }> {
   if (!data.name?.trim()) return { error: 'Name is required' }
   const attrs = {
     stars: data.stars,
@@ -44,6 +48,7 @@ export async function createPlayer(data: {
   const player = await playerRepo.createPlayer({
     name: data.name.trim(),
     avatarUrl: data.avatarUrl ?? null,
+    createdById: ownerId,
     ...attrs,
   })
   return { player }
@@ -60,9 +65,10 @@ export async function updatePlayer(
     defense: number
     energy: number
     speed: number
-  }>
+  }>,
+  ownerId: string
 ): Promise<{ error?: string; player?: PlayerEntity }> {
-  const existing = await playerRepo.findPlayerById(id)
+  const existing = await playerRepo.findPlayerByIdForOwner(id, ownerId)
   if (!existing) return { error: 'Player not found' }
   if (data.name !== undefined && !data.name?.trim()) return { error: 'Name cannot be empty' }
   if (!validateAttributes(data)) {
@@ -72,7 +78,12 @@ export async function updatePlayer(
   return { player: updated ?? existing }
 }
 
-export async function deletePlayer(id: string): Promise<{ error?: string; ok?: boolean }> {
+export async function deletePlayer(
+  id: string,
+  ownerId: string
+): Promise<{ error?: string; ok?: boolean }> {
+  const existing = await playerRepo.findPlayerByIdForOwner(id, ownerId)
+  if (!existing) return { error: 'Player not found' }
   const ok = await playerRepo.deletePlayer(id)
   if (!ok) return { error: 'Player not found' }
   return { ok: true }

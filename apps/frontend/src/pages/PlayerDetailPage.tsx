@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '@clerk/clerk-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
 import { PlayerProfileStats } from '@/features/players/PlayerProfileStats'
 import { getPlayer } from '@/services/players.service'
+import { useAuthToken } from '@/hooks/useAuthToken'
 import type { PlayerWithParticipation } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isSignedIn } = useAuth()
+  const getToken = useAuthToken()
   const [data, setData] = useState<PlayerWithParticipation | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,9 +20,13 @@ export function PlayerDetailPage() {
   useEffect(() => {
     if (!id) return
     let cancelled = false
-    getPlayer(id)
+    getToken()
+      .then((token) => {
+        if (cancelled || !token) return
+        return getPlayer(id, token)
+      })
       .then((d) => {
-        if (!cancelled) setData(d)
+        if (!cancelled && d) setData(d)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar')
@@ -33,7 +37,7 @@ export function PlayerDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, getToken])
 
   if (!id) return null
 
@@ -70,13 +74,11 @@ export function PlayerDetailPage() {
             <PageHeader.Title>{data.player.name}</PageHeader.Title>
             <PageHeader.Description>Perfil e estatísticas do jogador</PageHeader.Description>
           </div>
-          {isSignedIn && (
-            <PageHeader.Actions>
-              <Link to={`/players/${id}/edit`}>
-                <Button variant="outline">Editar</Button>
-              </Link>
-            </PageHeader.Actions>
-          )}
+        <PageHeader.Actions>
+          <Link to={`/players/${id}/edit`}>
+            <Button variant="outline">Editar</Button>
+          </Link>
+        </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
       <Card.Root>

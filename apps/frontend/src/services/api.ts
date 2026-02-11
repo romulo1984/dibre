@@ -12,7 +12,11 @@ async function request<T>(
   if (token) {
     ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
   }
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+    cache: 'no-store',
+  })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
     throw new Error((err as { error?: string }).error ?? res.statusText)

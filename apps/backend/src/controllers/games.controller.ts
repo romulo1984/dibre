@@ -13,7 +13,8 @@ const setPlayersSchema = z.object({
 
 export async function list(req: Request, res: Response): Promise<void> {
   try {
-    const games = await gameService.listGames()
+    const userId = res.locals.userId as string
+    const games = await gameService.listGames(userId)
     res.json(games)
   } catch (e) {
     console.error(e)
@@ -24,7 +25,8 @@ export async function list(req: Request, res: Response): Promise<void> {
 export async function getById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
-    const game = await gameService.getGameById(id)
+    const userId = res.locals.userId as string
+    const game = await gameService.getGameById(id, userId)
     if (!game) {
       res.status(404).json({ error: 'Game not found' })
       return
@@ -43,11 +45,8 @@ export async function create(req: Request, res: Response): Promise<void> {
       res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() })
       return
     }
-    const createdById = res.locals?.userId ?? null
-    const result = await gameService.createGame({
-      ...parsed.data,
-      createdById: createdById ?? undefined,
-    })
+    const userId = res.locals.userId as string
+    const result = await gameService.createGame(parsed.data, userId)
     if (result.error) {
       res.status(400).json({ error: result.error })
       return
@@ -67,7 +66,8 @@ export async function setPlayers(req: Request, res: Response): Promise<void> {
       res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() })
       return
     }
-    const result = await gameService.setGamePlayers(id, parsed.data.playerIds)
+    const userId = res.locals.userId as string
+    const result = await gameService.setGamePlayers(id, parsed.data.playerIds, userId)
     if (result.error) {
       res.status(404).json({ error: result.error })
       return
@@ -82,7 +82,8 @@ export async function setPlayers(req: Request, res: Response): Promise<void> {
 export async function getPlayers(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
-    const playerIds = await gameService.getGamePlayers(id)
+    const userId = res.locals.userId as string
+    const playerIds = await gameService.getGamePlayers(id, userId)
     res.json({ playerIds })
   } catch (e) {
     console.error(e)
@@ -93,7 +94,8 @@ export async function getPlayers(req: Request, res: Response): Promise<void> {
 export async function runDraw(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
-    const result = await gameService.runDraw(id)
+    const userId = res.locals.userId as string
+    const result = await gameService.runDraw(id, userId)
     if (result.error) {
       const status = result.error === 'Game not found' ? 404 : 400
       res.status(status).json({ error: result.error })
@@ -109,7 +111,8 @@ export async function runDraw(req: Request, res: Response): Promise<void> {
 export async function getTeams(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
-    const teams = await gameService.getGameTeams(id)
+    const userId = res.locals.userId as string
+    const teams = await gameService.getGameTeams(id, userId)
     res.json({ teams })
   } catch (e) {
     console.error(e)
@@ -120,7 +123,8 @@ export async function getTeams(req: Request, res: Response): Promise<void> {
 export async function remove(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
-    const result = await gameService.deleteGame(id)
+    const userId = res.locals.userId as string
+    const result = await gameService.deleteGame(id, userId)
     if (result.error) {
       res.status(404).json({ error: result.error })
       return

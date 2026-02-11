@@ -20,8 +20,11 @@ function toGameEntity(row: {
   }
 }
 
-export async function findAllGames(): Promise<GameEntity[]> {
-  const rows = await prisma.game.findMany({ orderBy: { createdAt: 'desc' } })
+export async function findAllGamesByOwner(ownerId: string): Promise<GameEntity[]> {
+  const rows = await prisma.game.findMany({
+    where: { createdById: ownerId },
+    orderBy: { createdAt: 'desc' },
+  })
   return rows.map(toGameEntity)
 }
 
@@ -30,10 +33,20 @@ export async function findGameById(id: string): Promise<GameEntity | null> {
   return row ? toGameEntity(row) : null
 }
 
+export async function findGameByIdForOwner(
+  id: string,
+  ownerId: string
+): Promise<GameEntity | null> {
+  const row = await prisma.game.findFirst({
+    where: { id, createdById: ownerId },
+  })
+  return row ? toGameEntity(row) : null
+}
+
 export async function createGame(data: {
   name: string
   numberOfTeams: number
-  createdById?: string | null
+  createdById: string
 }): Promise<GameEntity> {
   const row = await prisma.game.create({ data })
   return toGameEntity(row)
@@ -104,13 +117,7 @@ export async function getTeamsByGameId(gameId: string): Promise<TeamRecord[]> {
   )
 }
 
-export async function deleteGame(id: string): Promise<boolean> {
-  try {
-    await prisma.game.delete({ where: { id } })
-    return true
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2025')
-      return false
-    throw e
-  }
+export async function deleteGame(id: string, ownerId: string): Promise<boolean> {
+  const result = await prisma.game.deleteMany({ where: { id, createdById: ownerId } })
+  return result.count > 0
 }

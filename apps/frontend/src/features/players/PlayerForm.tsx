@@ -2,6 +2,7 @@ import { useState, useRef, type FormEvent, type ChangeEvent } from 'react'
 import type { Player } from '@/domain/types'
 import { STAR_MIN, STAR_MAX, ATTRIBUTE_LABELS } from '@/domain/types'
 import { Button } from '@/components/ui/Button/Button'
+import { AttributeRadarChart } from '@/features/players/AttributeRadarChart'
 import { compressImageToBase64 } from '@/utils/avatarImage'
 import { cn } from '@/lib/utils'
 
@@ -20,10 +21,11 @@ interface PlayerFormProps {
   onCancel?: () => void
 }
 
-const ATTRIBUTE_KEYS: (keyof Pick<
+/** Apenas atributos técnicos (sliders + radar); estrelas têm seletor próprio */
+const TECHNICAL_ATTRIBUTE_KEYS: (keyof Pick<
   Player,
-  'stars' | 'pass' | 'shot' | 'defense' | 'energy' | 'speed'
->)[] = ['stars', 'pass', 'shot', 'defense', 'energy', 'speed']
+  'pass' | 'shot' | 'defense' | 'energy' | 'speed'
+>)[] = ['pass', 'shot', 'defense', 'energy', 'speed']
 
 const inputClasses =
   'w-full rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] transition-all focus:border-[var(--color-brand-500)] focus:ring-2 focus:ring-[var(--color-brand-500)]/20 focus:outline-none'
@@ -112,15 +114,22 @@ export function PlayerForm({ initial, onSubmit, onCancel }: PlayerFormProps) {
     e.target.value = ''
   }
 
-  const stateByKey = { stars, pass, shot, defense, energy, speed } as const
+  const stateByKey = { pass, shot, defense, energy, speed } as const
   const setStateByKey = {
-    stars: setStars,
     pass: setPass,
     shot: setShot,
     defense: setDefense,
     energy: setEnergy,
     speed: setSpeed,
   } as const
+
+  const technicalAttributes = {
+    pass,
+    shot,
+    defense,
+    energy,
+    speed,
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -198,15 +207,51 @@ export function PlayerForm({ initial, onSubmit, onCancel }: PlayerFormProps) {
         {avatarError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{avatarError}</p>}
       </div>
 
-      {/* Attributes */}
+      {/* Estrelas: 5 clicáveis (clique na Nª estrela = valor N) */}
+      <div>
+        <span className={labelClasses}>{ATTRIBUTE_LABELS.stars}</span>
+        <div className="mt-2 flex items-center gap-1" role="group" aria-label="Quantidade de estrelas">
+          {(Array.from({ length: STAR_MAX }, (_, i) => i + 1) as (1 | 2 | 3 | 4 | 5)[]).map(
+            (n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setStars(n)}
+                className={cn(
+                  'rounded p-0.5 text-2xl transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
+                  stars >= n
+                    ? 'text-[var(--color-accent-500)] hover:opacity-90'
+                    : 'text-[var(--surface-tertiary)] hover:text-[var(--text-tertiary)]',
+                )}
+                aria-pressed={stars === n}
+                aria-label={`${n} estrela${n > 1 ? 's' : ''}`}
+              >
+                {stars >= n ? '★' : '☆'}
+              </button>
+            ),
+          )}
+          <span className="ml-2 text-sm font-medium text-[var(--text-secondary)]">{stars}</span>
+        </div>
+      </div>
+
+      {/* Atributos técnicos: sliders + radar em tempo real */}
       <div>
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-          Atributos
+          Atributos técnicos
         </h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {ATTRIBUTE_KEYS.map((key) =>
-            slider(ATTRIBUTE_LABELS[key], stateByKey[key], setStateByKey[key]),
-          )}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+          <div className="min-w-0 flex-1 grid gap-4 sm:grid-cols-2">
+            {TECHNICAL_ATTRIBUTE_KEYS.map((key) =>
+              slider(ATTRIBUTE_LABELS[key], stateByKey[key], setStateByKey[key]),
+            )}
+          </div>
+          <div className="shrink-0">
+            <AttributeRadarChart
+              attributes={technicalAttributes}
+              size={220}
+              ariaLabel="Preview dos atributos em tempo real"
+            />
+          </div>
         </div>
       </div>
 

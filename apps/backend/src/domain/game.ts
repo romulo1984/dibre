@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'viewer'
+export type Role = 'admin' | 'member' | 'viewer'
 
 export interface GameEntity {
   id: string

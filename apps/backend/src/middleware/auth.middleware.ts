@@ -22,7 +22,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   let user: { id: string; role: Role } | null = null
   try {
     const clerkUser = await clerkClient.users.getUser(userId)
-    const roleFromClerk = (clerkUser.publicMetadata?.role as Role) ?? 'viewer'
+    const roleFromClerk = (clerkUser.publicMetadata?.role as Role) ?? 'member'
     user = await upsertUserFromClerk({
       clerkId: userId,
       email: clerkUser.emailAddresses[0]?.emailAddress ?? null,

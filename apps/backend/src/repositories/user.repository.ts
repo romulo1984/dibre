@@ -24,12 +24,12 @@ export async function upsertUserFromClerk(data: {
       clerkId: data.clerkId,
       email: data.email ?? undefined,
       name: data.name ?? undefined,
-      role: (data.role ?? 'viewer') as 'viewer' | 'admin',
+      role: (data.role ?? 'member') as 'admin' | 'member' | 'viewer',
     },
     update: {
       email: data.email ?? undefined,
       name: data.name ?? undefined,
-      role: data.role ? (data.role as 'viewer' | 'admin') : undefined,
+      role: data.role ? (data.role as 'admin' | 'member' | 'viewer') : undefined,
     },
     select: { id: true, role: true },
   })

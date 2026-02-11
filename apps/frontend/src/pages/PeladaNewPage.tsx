@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@clerk/clerk-react'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Card } from '@/components/ui/Card/Card'
@@ -15,23 +14,11 @@ const labelClasses = 'mb-1.5 block text-sm font-medium text-[var(--text-secondar
 
 export function PeladaNewPage() {
   const navigate = useNavigate()
-  const { isSignedIn } = useAuth()
   const getToken = useAuthToken()
   const [name, setName] = useState('')
   const [numberOfTeams, setNumberOfTeams] = useState(2)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  if (!isSignedIn) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center dark:border-amber-800 dark:bg-amber-900/20">
-        <span className="mb-2 text-3xl">🔒</span>
-        <p className="font-medium text-amber-800 dark:text-amber-200">
-          Faça login como admin para criar peladas.
-        </p>
-      </div>
-    )
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

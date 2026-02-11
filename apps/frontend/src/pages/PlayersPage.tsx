@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@clerk/clerk-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { PlayerList } from '@/features/players/PlayerList'
 import { listPlayers } from '@/services/players.service'
+import { useAuthToken } from '@/hooks/useAuthToken'
 import type { Player } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PlayersPage() {
-  const { isSignedIn } = useAuth()
+  const getToken = useAuthToken()
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    listPlayers()
+    getToken()
+      .then((token) => {
+        if (cancelled || !token) return
+        return listPlayers(token)
+      })
       .then((data) => {
-        if (!cancelled) setPlayers(data)
+        if (!cancelled && data) setPlayers(data)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar')
@@ -29,7 +33,7 @@ export function PlayersPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [getToken])
 
   return (
     <div className="space-y-6">
@@ -41,13 +45,11 @@ export function PlayersPage() {
               Lista de jogadores com estrelas e atributos. Clique para ver o perfil.
             </PageHeader.Description>
           </div>
-          {isSignedIn && (
-            <PageHeader.Actions>
-              <Link to="/players/new">
-                <Button variant="primary">Novo jogador</Button>
-              </Link>
-            </PageHeader.Actions>
-          )}
+          <PageHeader.Actions>
+            <Link to="/players/new">
+              <Button variant="primary">Novo jogador</Button>
+            </Link>
+          </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
 

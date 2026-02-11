@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '@clerk/clerk-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { GameList } from '@/features/games/GameList'
 import { listGames } from '@/services/games.service'
+import { useAuthToken } from '@/hooks/useAuthToken'
 import type { Game } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PeladasPage() {
-  const { isSignedIn } = useAuth()
+  const getToken = useAuthToken()
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    listGames()
+    getToken()
+      .then((token) => {
+        if (cancelled || !token) return
+        return listGames(token)
+      })
       .then((data) => {
-        if (!cancelled) setGames(data)
+        if (!cancelled && data) setGames(data)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Erro ao carregar')
@@ -29,7 +33,7 @@ export function PeladasPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [getToken])
 
   return (
     <div className="space-y-6">
@@ -41,13 +45,11 @@ export function PeladasPage() {
               Crie peladas, selecione jogadores e execute o sorteio equilibrado.
             </PageHeader.Description>
           </div>
-          {isSignedIn && (
-            <PageHeader.Actions>
-              <Link to="/peladas/new">
-                <Button variant="primary">Nova pelada</Button>
-              </Link>
-            </PageHeader.Actions>
-          )}
+          <PageHeader.Actions>
+            <Link to="/peladas/new">
+              <Button variant="primary">Nova pelada</Button>
+            </Link>
+          </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
 

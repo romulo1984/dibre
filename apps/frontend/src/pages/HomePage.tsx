@@ -162,8 +162,8 @@ export function HomePage() {
           <h2 className="text-2xl font-bold text-[var(--text-primary)] sm:text-3xl">
             Pronto para a próxima pelada?
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[var(--text-secondary)]">
-            Crie sua conta de admin, cadastre os jogadores e nunca mais tenha times desbalanceados.
+          <p className="mx-auto max-w-md text-[var(--text-secondary)]">
+            Faça login, cadastre seus jogadores e nunca mais tenha times desbalanceados.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link to="/peladas/new">

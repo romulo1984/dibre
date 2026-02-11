@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { Layout } from '@/components/layout/Layout'
+import { RequireAuth } from '@/components/auth/RequireAuth'
 import { HomePage } from '@/pages/HomePage'
 import { PlayersPage } from '@/pages/PlayersPage'
 import { PlayerDetailPage } from '@/pages/PlayerDetailPage'
@@ -18,13 +19,16 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="players" element={<PlayersPage />} />
-          <Route path="players/new" element={<PlayerNewPage />} />
-          <Route path="players/:id" element={<PlayerDetailPage />} />
-          <Route path="players/:id/edit" element={<PlayerEditPage />} />
-          <Route path="peladas" element={<PeladasPage />} />
-          <Route path="peladas/new" element={<PeladaNewPage />} />
-          <Route path="peladas/:id" element={<PeladaDetailPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="players" element={<PlayersPage />} />
+            <Route path="players/new" element={<PlayerNewPage />} />
+            <Route path="players/:id" element={<PlayerDetailPage />} />
+            <Route path="players/:id/edit" element={<PlayerEditPage />} />
+            <Route path="peladas" element={<PeladasPage />} />
+            <Route path="peladas/new" element={<PeladaNewPage />} />
+            <Route path="peladas/:id" element={<PeladaDetailPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>
