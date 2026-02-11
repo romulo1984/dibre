@@ -51,12 +51,24 @@ export async function getById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
     const userId = res.locals.userId as string
-    const result = await playerService.getPlayerWithParticipationCount(id, userId)
+    const result = await playerService.getPlayerProfile(id, userId)
     if (!result) {
       res.status(404).json({ error: 'Player not found' })
       return
     }
-    res.json(result)
+    res.json({
+      player: result.player,
+      participationCount: result.participationCount,
+      games: result.games.map((g) => ({
+        id: g.id,
+        name: g.name,
+        createdAt: g.createdAt.toISOString(),
+      })),
+      teammates: result.teammates.map((t) => ({
+        player: t.player,
+        timesTogether: t.timesTogether,
+      })),
+    })
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Failed to get player' })

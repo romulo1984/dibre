@@ -3,6 +3,7 @@ import type { Player } from '@/domain/types'
 import { STAR_MIN, STAR_MAX, ATTRIBUTE_LABELS } from '@/domain/types'
 import { Button } from '@/components/ui/Button/Button'
 import { AttributeRadarChart } from '@/features/players/AttributeRadarChart'
+import { PlayerAvatar } from '@/features/players/PlayerAvatar'
 import { compressImageToBase64 } from '@/utils/avatarImage'
 import { cn } from '@/lib/utils'
 
@@ -157,14 +158,14 @@ export function PlayerForm({ initial, onSubmit, onCancel }: PlayerFormProps) {
       <div>
         <span className={labelClasses}>Foto do jogador (opcional)</span>
         <p className="mb-3 text-xs text-[var(--text-tertiary)]">
-          A imagem será recortada em quadrado e comprimida automaticamente.
+          A imagem será recortada e comprimida (proporção 3×4).
         </p>
         {avatarUrl && (avatarUrl.startsWith('data:') || avatarUrl.startsWith('http')) ? (
           <div className="flex flex-wrap items-center gap-4">
-            <img
-              src={avatarUrl}
-              alt="Preview do avatar"
-              className="size-20 rounded-full object-cover ring-2 ring-[var(--color-brand-200)] ring-offset-2 ring-offset-[var(--surface-primary)]"
+            <PlayerAvatar
+              player={{ name: name || 'Jogador', avatarUrl }}
+              size="md"
+              className="rounded-lg ring-2 ring-[var(--color-brand-200)] ring-offset-2 ring-offset-[var(--surface-primary)]"
             />
             <div className="flex flex-col gap-2">
               <input

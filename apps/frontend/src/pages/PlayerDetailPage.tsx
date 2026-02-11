@@ -4,16 +4,18 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
 import { PlayerProfileStats } from '@/features/players/PlayerProfileStats'
+import { PlayerParticipatedGames } from '@/features/players/PlayerParticipatedGames'
+import { PlayerTopTeammates } from '@/features/players/PlayerTopTeammates'
 import { getPlayer } from '@/services/players.service'
 import { useAuthToken } from '@/hooks/useAuthToken'
-import type { PlayerWithParticipation } from '@/domain/types'
+import type { PlayerProfileResponse } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
 export function PlayerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const getToken = useAuthToken()
-  const [data, setData] = useState<PlayerWithParticipation | null>(null)
+  const [data, setData] = useState<PlayerProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,9 +45,9 @@ export function PlayerDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="flex flex-col items-center gap-3">
-          <span className="size-8 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="size-10 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
           <p className="text-sm text-[var(--text-tertiary)]">Carregando perfil...</p>
         </div>
       </div>
@@ -54,38 +56,61 @@ export function PlayerDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-900/20">
-        <span className="mb-2 text-3xl">😕</span>
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-10 text-center dark:border-red-800 dark:bg-red-900/20">
+        <span className="mb-3 text-4xl">😕</span>
         <p className="font-medium text-red-700 dark:text-red-400">
           {error ?? 'Jogador não encontrado'}
         </p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/players')}>
-          Voltar
+        <Button variant="outline" className="mt-5" onClick={() => navigate('/players')}>
+          Voltar aos jogadores
         </Button>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <BlurFade delay={0.1}>
+    <div className="space-y-8">
+      <BlurFade delay={0.05}>
         <PageHeader.Root>
           <div>
             <PageHeader.Title>{data.player.name}</PageHeader.Title>
-            <PageHeader.Description>Perfil e estatísticas do jogador</PageHeader.Description>
+            <PageHeader.Description>
+              Perfil, estatísticas e histórico de peladas
+            </PageHeader.Description>
           </div>
-        <PageHeader.Actions>
-          <Link to={`/players/${id}/edit`}>
-            <Button variant="outline">Editar</Button>
-          </Link>
-        </PageHeader.Actions>
+          <PageHeader.Actions>
+            <Link to={`/players/${id}/edit`}>
+              <Button variant="outline">Editar</Button>
+            </Link>
+          </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
-      <Card.Root>
-        <Card.Content className="p-6 sm:p-8">
-          <PlayerProfileStats player={data.player} participationCount={data.participationCount} />
-        </Card.Content>
-      </Card.Root>
+
+      {/* Hero: perfil + radar */}
+      <BlurFade delay={0.1}>
+        <Card.Root className="overflow-hidden">
+          <Card.Content className="p-6 sm:p-8">
+            <PlayerProfileStats
+              player={data.player}
+              participationCount={data.participationCount}
+            />
+          </Card.Content>
+        </Card.Root>
+      </BlurFade>
+
+      {/* Grid: Peladas + Top 5 parceiros */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card.Root>
+          <Card.Content className="p-6">
+            <PlayerParticipatedGames games={data.games} />
+          </Card.Content>
+        </Card.Root>
+        <Card.Root>
+          <Card.Content className="p-6">
+            <PlayerTopTeammates teammates={data.teammates} />
+          </Card.Content>
+        </Card.Root>
+      </div>
     </div>
   )
 }

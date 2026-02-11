@@ -3,6 +3,7 @@ import type { Player } from '@/domain/types'
 import { Stars } from '@/components/ui/Stars/Stars'
 import { MagicCard } from '@/components/magicui/magic-card'
 import { BlurFade } from '@/components/magicui/blur-fade'
+import { PlayerAvatar } from '@/features/players/PlayerAvatar'
 
 interface PlayerListProps {
   players: Player[]
@@ -31,19 +32,14 @@ export function PlayerList({ players }: PlayerListProps) {
                 className="group p-0 transition-shadow hover:shadow-lg"
                 gradientColor="var(--color-brand-50)"
               >
-                {/* Header with avatar and name */}
+                {/* Header with avatar 3:4 and name */}
                 <div className="flex items-center gap-3 border-b border-[var(--border-primary)] p-4">
-                  {player.avatarUrl ? (
-                    <img
-                      src={player.avatarUrl}
-                      alt=""
-                      className="size-11 shrink-0 rounded-full object-cover ring-2 ring-[var(--color-brand-200)] ring-offset-2 ring-offset-[var(--surface-primary)]"
-                    />
-                  ) : (
-                    <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-brand-100)] to-[var(--color-brand-200)] text-lg font-bold text-[var(--color-brand-700)]">
-                      {player.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <PlayerAvatar
+                    player={player}
+                    size="md"
+                    hoverZoom
+                    className="ring-2 ring-[var(--color-brand-200)] ring-offset-2 ring-offset-[var(--surface-primary)]"
+                  />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--color-brand-600)]">
                       {player.name}

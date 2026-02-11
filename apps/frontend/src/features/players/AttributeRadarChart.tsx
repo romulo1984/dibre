@@ -60,18 +60,22 @@ export function AttributeRadarChart({
   ariaLabel = 'Atributos técnicos em radar',
   className,
 }: AttributeRadarChartProps) {
+  const PADDING = 10
+  const innerSize = size - 2 * PADDING
+
   const { cx, cy, gridLevels, dataPoly, labelPoints, colors } =
     useMemo(() => {
-      const cx = size / 2
-      const cy = size / 2
-      const maxR = (size / 2) * 0.72
+      const cx = innerSize / 2
+      const cy = innerSize / 2
+      const maxR = (innerSize / 2) * 0.72
       const range = max - min || 1
 
       // Ângulos em graus: topo = 90°, depois +72° por vértice (sentido horário). SVG: y para baixo.
       const angles = [90, 162, 234, 306, 18].map((d) => (d * Math.PI) / 180)
 
-      const gridLevels = [1, 2, 3, 4, 5].map((level) => {
-        const t = level / 5
+      // 4 linhas concêntricas equidistantes: centro = 1, cada anel = +1 (2, 3, 4, 5)
+      const gridLevels = [1, 2, 3, 4].map((step) => {
+        const t = step / 4
         const r = t * maxR
         return angles.map((a) => ({
           x: cx + r * Math.cos(a),
@@ -92,7 +96,7 @@ export function AttributeRadarChart({
 
       const dataPoly = dataPoints.map((p) => `${p.x},${p.y}`).join(' ')
 
-      const labelRadius = maxR + size * 0.12
+      const labelRadius = maxR + innerSize * 0.08
       const labelPoints = angles.map((a, i) => ({
         x: cx + labelRadius * Math.cos(a),
         y: cy - labelRadius * Math.sin(a),
@@ -113,13 +117,18 @@ export function AttributeRadarChart({
       }
     }, [attributes, size, min, max])
 
+  const viewSize = size + 2 * PADDING
+  const offset = (viewSize - innerSize) / 2
+
   return (
     <figure className={cn('flex flex-col items-center', className)}>
       <svg
-        viewBox={`0 0 ${size} ${size}`}
-        className="w-full max-w-[280px]"
+        viewBox={`0 0 ${viewSize} ${viewSize}`}
+        className="size-full max-w-full"
         aria-label={ariaLabel}
+        preserveAspectRatio="xMidYMid meet"
       >
+        <g transform={`translate(${offset}, ${offset})`}>
         {/* Grid: pentágonos concêntricos */}
         <g stroke="rgb(203 213 225)" strokeWidth="0.8" fill="none">
           {gridLevels.map((pts, i) => (
@@ -133,7 +142,7 @@ export function AttributeRadarChart({
         {/* Linhas do centro aos vértices */}
         <g stroke="rgb(226 232 240)" strokeWidth="0.6">
           {[0, 1, 2, 3, 4].map((i) => {
-            const p = gridLevels[4][i]
+            const p = gridLevels[gridLevels.length - 1][i]
             return (
               <line
                 key={i}
@@ -183,6 +192,7 @@ export function AttributeRadarChart({
               </text>
             </g>
           ))}
+        </g>
       </svg>
       <figcaption className="sr-only">
         Atributos: Passe {formatAttributeValue(attributes.pass)}, Chute{' '}

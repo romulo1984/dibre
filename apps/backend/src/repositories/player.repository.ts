@@ -106,3 +106,33 @@ export async function deletePlayer(id: string): Promise<boolean> {
 export async function countParticipations(playerId: string): Promise<number> {
   return prisma.gamePlayer.count({ where: { playerId } })
 }
+
+export interface ParticipatedGameRow {
+  id: string
+  name: string
+  createdAt: Date
+}
+
+/** Lista peladas em que o jogador participou (do mesmo dono), mais recentes primeiro. */
+export async function findParticipatedGames(
+  playerId: string,
+  ownerId: string
+): Promise<ParticipatedGameRow[]> {
+  const rows = await prisma.gamePlayer.findMany({
+    where: {
+      playerId,
+      game: { createdById: ownerId },
+    },
+    include: {
+      game: {
+        select: { id: true, name: true, createdAt: true },
+      },
+    },
+    orderBy: { game: { createdAt: 'desc' } },
+  })
+  return rows.map((r) => ({
+    id: r.game.id,
+    name: r.game.name,
+    createdAt: r.game.createdAt,
+  }))
+}

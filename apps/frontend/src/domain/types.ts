@@ -31,6 +31,27 @@ export interface PlayerWithParticipation {
   participationCount: number
 }
 
+/** Pelada em que o jogador participou (resumo para listagem) */
+export interface PlayerParticipationGame {
+  id: string
+  name: string
+  createdAt: string
+}
+
+/** Parceiro de time: jogador + quantas vezes esteve no mesmo time no sorteio */
+export interface PlayerTeammate {
+  player: Player
+  timesTogether: number
+}
+
+/** Resposta do perfil do jogador (página de detalhe) */
+export interface PlayerProfileResponse {
+  player: Player
+  participationCount: number
+  games: PlayerParticipationGame[]
+  teammates: PlayerTeammate[]
+}
+
 export interface Game {
   id: string
   name: string

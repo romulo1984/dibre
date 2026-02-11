@@ -68,11 +68,8 @@ export function TeamStatsCard({ team, playersMap }: TeamStatsCardProps) {
             </ul>
           </div>
 
-          {/* Médias dos atributos técnicos — radar (suporta decimais) */}
+          {/* Radar das médias (sem título) */}
           <div>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-              Médias dos atributos
-            </h4>
             <AttributeRadarChart
               attributes={{
                 pass: team.avgPass,

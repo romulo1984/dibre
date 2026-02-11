@@ -1,12 +1,12 @@
-import type { Player, PlayerWithParticipation } from '@/domain/types'
+import type { Player, PlayerProfileResponse } from '@/domain/types'
 import { api } from '@/services/api'
 
 export async function listPlayers(token: string): Promise<Player[]> {
   return api.get<Player[]>('/players', token)
 }
 
-export async function getPlayer(id: string, token: string): Promise<PlayerWithParticipation> {
-  return api.get<PlayerWithParticipation>(`/players/${id}`, token)
+export async function getPlayer(id: string, token: string): Promise<PlayerProfileResponse> {
+  return api.get<PlayerProfileResponse>(`/players/${id}`, token)
 }
 
 export async function createPlayer(

@@ -22,32 +22,46 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   })
 }
 
+const ASPECT_WIDTH = 3
+const ASPECT_HEIGHT = 4
+
 /**
- * Recorta o centro quadrado da imagem e redimensiona.
+ * Recorta o centro da imagem na proporção 3×4 e redimensiona.
  * Desenha em um canvas e exporta como JPEG com a qualidade dada.
  */
-function drawCenterSquare(
+function drawCenter34(
   img: HTMLImageElement,
-  size: number,
+  width: number,
   quality: number
 ): string {
+  const height = Math.round((width * ASPECT_HEIGHT) / ASPECT_WIDTH)
   const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
+  canvas.width = width
+  canvas.height = height
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas 2d não disponível')
 
-  const s = Math.min(img.width, img.height)
-  const x = (img.width - s) / 2
-  const y = (img.height - s) / 2
-  ctx.drawImage(img, x, y, s, s, 0, 0, size, size)
+  const imgRatio = img.width / img.height
+  const targetRatio = ASPECT_WIDTH / ASPECT_HEIGHT
+  let sx = 0
+  let sy = 0
+  let sw = img.width
+  let sh = img.height
+  if (imgRatio > targetRatio) {
+    sw = img.height * targetRatio
+    sx = (img.width - sw) / 2
+  } else {
+    sh = img.width / targetRatio
+    sy = (img.height - sh) / 2
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height)
   return canvas.toDataURL('image/jpeg', quality)
 }
 
 /**
  * Comprime o arquivo de imagem para um data URL (base64) em tamanho adequado.
- * - Recorte: centro quadrado.
- * - Redimensiona para no máximo `maxSize` px (lado).
+ * - Recorte: centro na proporção 3×4 (retrato).
+ * - Redimensiona para no máximo `maxSize` px de largura.
  * - JPEG com qualidade reduzida até caber em ~360KB.
  */
 export async function compressImageToBase64(
@@ -63,16 +77,15 @@ export async function compressImageToBase64(
   const qualities = [0.8, 0.75, 0.65, 0.55, 0.45]
 
   for (const q of qualities) {
-    const dataUrl = drawCenterSquare(img, maxSize, q)
+    const dataUrl = drawCenter34(img, maxSize, q)
     if (dataUrl.length <= maxDataUrlLength) return dataUrl
   }
 
-  // Última tentativa com tamanho menor
   const smaller = Math.floor(maxSize * 0.75)
   for (const q of [0.5, 0.4]) {
-    const dataUrl = drawCenterSquare(img, smaller, q)
+    const dataUrl = drawCenter34(img, smaller, q)
     if (dataUrl.length <= maxDataUrlLength) return dataUrl
   }
 
-  return drawCenterSquare(img, smaller, 0.35)
+  return drawCenter34(img, smaller, 0.35)
 }

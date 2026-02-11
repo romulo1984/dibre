@@ -4,6 +4,7 @@ import { Stars } from '@/components/ui/Stars/Stars'
 import { ATTRIBUTE_LABELS } from '@/domain/types'
 import type { Player, PlayerAttributes } from '@/domain/types'
 import { AttributeRadarChart } from '@/features/players/AttributeRadarChart'
+import { PlayerAvatar } from '@/features/players/PlayerAvatar'
 import { cn } from '@/lib/utils'
 
 /** Dados mínimos para exibir uma linha de jogador (avatar + nome) */
@@ -21,34 +22,15 @@ interface PlayerRowRootProps {
   player: PlayerRowPlayer
   /** Conteúdo à direita (ex.: checkbox, badge). Composition: use como children. */
   children?: ReactNode
-  /** Se true, ao passar o mouse no nome exibe popover com estrelas e atributos (player deve ter stars, pass, etc.) */
+  /** Conteúdo à esquerda do avatar (ex.: posição no ranking). */
+  prefix?: ReactNode
+  /** Se true, ao passar o mouse exibe popover com estrelas e atributos (player deve ter stars, pass, etc.) */
   showAttributesOnHover?: boolean
   /** Jogador com atributos (obrigatório se showAttributesOnHover) */
   playerWithAttrs?: PlayerRowPlayerWithAttrs
+  /** Tamanho do avatar: sm (row compacta) | md (row padrão) */
+  avatarSize?: 'sm' | 'md'
   className?: string
-}
-
-function Avatar({ player, size = 'md' }: { player: PlayerRowPlayer; size?: 'sm' | 'md' }) {
-  const sizeClass = size === 'sm' ? 'size-8' : 'size-10'
-  if (player.avatarUrl) {
-    return (
-      <img
-        src={player.avatarUrl}
-        alt=""
-        className={cn('shrink-0 rounded-full object-cover', sizeClass)}
-      />
-    )
-  }
-  return (
-    <div
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-full bg-[var(--surface-tertiary)] text-sm font-semibold text-[var(--text-tertiary)]',
-        sizeClass,
-      )}
-    >
-      {player.name.charAt(0).toUpperCase()}
-    </div>
-  )
 }
 
 const POPOVER_SHOW_DELAY_MS = 200
@@ -169,8 +151,9 @@ function AttributesPopover({
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
         className={cn(
-          'w-full cursor-default rounded-lg transition-colors duration-150',
-          open && 'bg-[var(--surface-tertiary)]',
+          'group w-full cursor-default rounded-xl transition-all duration-200',
+          'bg-gradient-to-r from-transparent via-transparent to-[var(--surface-secondary)]/30',
+          open && 'bg-[var(--surface-secondary)]/60',
           rowClassName,
         )}
       >
@@ -184,15 +167,17 @@ function AttributesPopover({
 }
 
 /**
- * Linha reutilizável de jogador: avatar + nome (+ conteúdo extra por composition).
- * Use em listas verticais (times, seleção de jogadores).
- * Com showAttributesOnHover, a row inteira é área de hover e mostra popover + efeito de fundo.
+ * Linha reutilizável de jogador: [prefix] + avatar 3:4 + nome + children.
+ * Use em listas verticais (times, seleção, top parceria).
+ * Com showAttributesOnHover, a row inteira é área de hover e mostra popover + degradê.
  */
 export function PlayerRow({
   player,
   children,
+  prefix,
   showAttributesOnHover = false,
   playerWithAttrs,
+  avatarSize = 'sm',
   className,
 }: PlayerRowRootProps) {
   const attrsSource = playerWithAttrs ?? (player as PlayerRowPlayerWithAttrs)
@@ -203,7 +188,8 @@ export function PlayerRow({
 
   const rowContent = (
     <>
-      <Avatar player={player} size="sm" />
+      {prefix}
+      <PlayerAvatar player={player} size={avatarSize} hoverZoom />
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--text-primary)]">
         {player.name}
       </span>
@@ -211,25 +197,22 @@ export function PlayerRow({
     </>
   )
 
+  const rowWrapperClass = cn(
+    'flex items-center gap-3 rounded-xl py-2 pr-3 transition-colors',
+    !showPopover && 'group bg-gradient-to-r from-transparent to-[var(--surface-secondary)]/20 hover:to-[var(--surface-secondary)]/50',
+  )
+
   return (
     <div className={className}>
       {showPopover ? (
         <AttributesPopover
           player={attrsSource as PlayerRowPlayerWithAttrs}
-          rowClassName={cn(
-            'flex items-center gap-3 py-1.5 pr-2',
-            'hover:bg-[var(--surface-tertiary)]',
-          )}
+          rowClassName={rowWrapperClass}
         >
           {rowContent}
         </AttributesPopover>
       ) : (
-        <div
-          className={cn(
-            'flex items-center gap-3 rounded-lg py-1.5 pr-2 transition-colors',
-            'hover:bg-[var(--surface-tertiary)]',
-          )}
-        >
+        <div className={rowWrapperClass}>
           {rowContent}
         </div>
       )}
