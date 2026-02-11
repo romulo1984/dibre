@@ -223,6 +223,21 @@ body {
   }
 }
 
+/* Logo: brilho sutil no ponto de destaque */
+@keyframes logo-dot-glow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.82;
+  }
+}
+
+.logo-dot-glow {
+  animation: logo-dot-glow 2.5s ease-in-out infinite;
+}
+
 @theme inline {
   --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
   --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;

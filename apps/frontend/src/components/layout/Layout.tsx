@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { Logo } from '@/components/ui/Logo'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
@@ -18,14 +19,15 @@ export function Layout() {
           {/* Logo */}
           <Link
             to="/"
-            className="group flex items-center gap-2 text-xl font-extrabold tracking-tight transition-colors"
+            className="group flex items-center transition-opacity hover:opacity-90"
+            aria-label="dib.re - Início"
           >
-            <span className="inline-flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-brand-500)] to-[var(--color-brand-700)] text-sm font-black text-white shadow-md transition-transform group-hover:scale-110">
-              ⚽
-            </span>
-            <span className="bg-gradient-to-r from-[var(--color-brand-600)] to-[var(--color-brand-400)] bg-clip-text text-transparent">
-              dib.re
-            </span>
+            <Logo
+              height={32}
+              primaryColor="var(--text-primary)"
+              accentColor="var(--color-accent-500)"
+              className="transition-transform group-hover:scale-[1.02]"
+            />
           </Link>
 
           {/* Nav links */}
