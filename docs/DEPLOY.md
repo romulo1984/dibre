@@ -10,7 +10,7 @@
 
 ### Build e imagem
 
-O build é feito a partir da **raiz do monorepo** (contexto do Docker), pois o Dockerfile usa `pnpm-workspace` e `apps/backend/`:
+O build é feito a partir da **raiz do monorepo** (contexto do Docker), pois o Dockerfile usa npm workspaces e `apps/backend/`:
 
 - **Build context**: raiz do repositório (`.`)
 - **Dockerfile**: `apps/backend/Dockerfile`
@@ -19,7 +19,7 @@ O build é feito a partir da **raiz do monorepo** (contexto do Docker), pois o D
 No Coolify, configure o serviço com:
 
 - **Dockerfile path**: `apps/backend/Dockerfile`
-- **Build context**: raiz do repo (onde está `package.json`, `pnpm-workspace.yaml`)
+- **Build context**: raiz do repo (onde está `package.json`)
 
 ### Variáveis de ambiente
 
@@ -57,7 +57,7 @@ Assim o projeto fica pronto para uma futura conexão Oracle; hoje o app usa apen
 Em produção, rode as migrações antes ou após o deploy (job único ou init container):
 
 ```bash
-pnpm run db:migrate
+npm run db:migrate
 ```
 
 No Coolify, isso pode ser um **one-off job** ou script de pré-deploy, com as mesmas variáveis de ambiente do serviço principal (incluindo `DATABASE_URL` para MySQL).

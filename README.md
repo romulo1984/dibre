@@ -20,7 +20,7 @@ Sistema web para avaliação de atletas de pelada e geração automática de tim
 ## Pré-requisitos
 
 - Node 24 (`nvm use` se usar nvm)
-- pnpm 9
+- npm 10+
 - Docker e Docker Compose (para rodar MySQL e API em container)
 - Conta no [Clerk](https://clerk.com) para auth
 
@@ -29,7 +29,7 @@ Sistema web para avaliação de atletas de pelada e geração automática de tim
 ### 1. Instalar dependências
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 2. Variáveis de ambiente
@@ -58,8 +58,8 @@ Use o mesmo `CLERK_PUBLISHABLE_KEY` no frontend e o `CLERK_SECRET_KEY` apenas no
 
 ```bash
 docker compose up -d mysql
-pnpm run db:generate
-pnpm run db:push
+npm run db:generate
+npm run db:push
 ```
 
 ### 4. Rodar em desenvolvimento
@@ -67,13 +67,13 @@ pnpm run db:push
 Terminal 1 – API:
 
 ```bash
-pnpm run dev:backend
+npm run dev:backend
 ```
 
 Terminal 2 – Frontend:
 
 ```bash
-pnpm run dev:frontend
+npm run dev:frontend
 ```
 
 - Frontend: http://localhost:5173  
@@ -86,7 +86,7 @@ pnpm run dev:frontend
 docker compose up --build
 ```
 
-API em http://localhost:4000. Frontend continua em `pnpm run dev:frontend` apontando para a API (proxy ou `FRONTEND_URL`).
+API em http://localhost:4000. Frontend continua em `npm run dev:frontend` apontando para a API (proxy ou `FRONTEND_URL`).
 
 ## Produção
 
@@ -104,16 +104,16 @@ API em http://localhost:4000. Frontend continua em `pnpm run dev:frontend` apont
 
 | Comando            | Descrição                          |
 |--------------------|------------------------------------|
-| `pnpm dev`         | Sobe frontend e backend em paralelo |
-| `pnpm dev:backend` | Sobe só a API                      |
-| `pnpm dev:frontend`| Sobe só o frontend                 |
-| `pnpm build`       | Build de todos os apps             |
-| `pnpm lint`        | Lint em todos os apps              |
-| `pnpm format`      | Formata código com Prettier (sem ponto e vírgula) |
-| `pnpm db:generate` | Gera Prisma Client                 |
-| `pnpm db:push`     | Aplica schema no banco (dev)       |
-| `pnpm db:migrate`  | Roda migrações (produção)          |
-| `pnpm db:studio`   | Abre Prisma Studio                 |
+| `npm run dev`         | Sobe frontend e backend em paralelo |
+| `npm run dev:backend` | Sobe só a API                      |
+| `npm run dev:frontend`| Sobe só o frontend                 |
+| `npm run build`       | Build de todos os apps             |
+| `npm run lint`        | Lint em todos os apps              |
+| `npm run format`      | Formata código com Prettier (sem ponto e vírgula) |
+| `npm run db:generate` | Gera Prisma Client                 |
+| `npm run db:push`     | Aplica schema no banco (dev)       |
+| `npm run db:migrate`  | Roda migrações (produção)          |
+| `npm run db:studio`   | Abre Prisma Studio                 |
 
 ## Estrutura do monorepo
 
@@ -142,7 +142,7 @@ dibre/
 │           └── services
 ├── docker-compose.yml     # Local: API + MySQL
 ├── .nvmrc                 # Node 24
-└── pnpm-workspace.yaml
+└── package.json            # Workspaces config
 ```
 
 ## Algoritmo de sorteio

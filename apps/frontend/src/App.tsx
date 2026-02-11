@@ -64,7 +64,7 @@ function ClerkMissingMessage() {
           .
         </p>
         <p className="mt-4 text-xs text-[var(--text-tertiary)]">
-          Reinicie o servidor após salvar o .env (pnpm run dev:frontend).
+          Reinicie o servidor após salvar o .env (npm run dev:frontend).
         </p>
       </div>
     </div>

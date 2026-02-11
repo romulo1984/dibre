@@ -1,8 +1,8 @@
 #!/bin/sh
 # Replaces furycloud registry tarballs with the default npmjs registry
-# in pnpm-lock.yaml so that production builds fetch from the public registry.
+# in package-lock.json so that production builds fetch from the public registry.
 
-LOCKFILE="pnpm-lock.yaml"
+LOCKFILE="package-lock.json"
 
 if [ ! -f "$LOCKFILE" ]; then
   echo "[fix-lockfile-registry] $LOCKFILE not found, skipping."
