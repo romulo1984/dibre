@@ -5,8 +5,8 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY apps/backend/package.json apps/backend/
-COPY scripts/fix-lockfile-registry.sh scripts/
-RUN npm ci
+RUN sed -i 's|https://npm.artifacts.furycloud.io/repository/all/|https://registry.npmjs.org/|g' package-lock.json 2>/dev/null; \
+    npm ci --ignore-scripts
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
