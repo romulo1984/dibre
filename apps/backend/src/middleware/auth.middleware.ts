@@ -4,7 +4,13 @@ import type { Role } from '../domain/game.js'
 import { upsertUserFromClerk } from '../repositories/user.repository.js'
 import type { AuthLocals } from '../types/auth.js'
 
-const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+let _clerkClient: ReturnType<typeof createClerkClient> | null = null
+function getClerkClient() {
+  if (!_clerkClient) {
+    _clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+  }
+  return _clerkClient
+}
 
 export type { AuthLocals }
 
@@ -21,7 +27,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   let user: { id: string; role: Role } | null = null
   try {
-    const clerkUser = await clerkClient.users.getUser(userId)
+    const clerkUser = await getClerkClient().users.getUser(userId)
     const roleFromClerk = (clerkUser.publicMetadata?.role as Role) ?? 'member'
     user = await upsertUserFromClerk({
       clerkId: userId,
@@ -32,7 +38,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
           : (clerkUser.firstName ?? clerkUser.username ?? null),
       role: roleFromClerk,
     })
-  } catch {
+  } catch (err) {
+    console.error('[auth] Failed to resolve user:', err)
     res.status(401).json({ error: 'User not found' })
     return
   }
