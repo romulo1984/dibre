@@ -3,6 +3,7 @@
   "private": true,
   "description": "Sistema de avaliação de atletas e sorteio equilibrado de times para pelada",
   "scripts": {
+    "preinstall": "sh scripts/fix-lockfile-registry.sh",
     "dev": "pnpm run --parallel dev",
     "dev:backend": "pnpm --filter backend dev",
     "dev:frontend": "pnpm --filter frontend dev",

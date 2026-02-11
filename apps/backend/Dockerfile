@@ -6,6 +6,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY apps/backend/package.json apps/backend/
+COPY scripts/fix-lockfile-registry.sh scripts/
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
