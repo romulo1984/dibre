@@ -9,9 +9,9 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:migrate": "node scripts/run-with-env.js prisma migrate deploy",
+    "db:push": "node scripts/run-with-env.js prisma db push",
+    "db:studio": "node scripts/run-with-env.js prisma studio"
   },
   "dependencies": {
     "@clerk/express": "^1.7.0",

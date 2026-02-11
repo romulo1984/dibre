@@ -50,6 +50,8 @@ PORT=4000
 VITE_CLERK_PUBLISHABLE_KEY=pk_...
 ```
 
+Em ambos os apps, **`.env.local`** é suportado e sobrescreve variáveis do `.env` (útil para valores locais que não entram no git). Backend: carrega `apps/backend/.env` e depois `apps/backend/.env.local`. Frontend: o Vite já carrega `.env` e `.env.local` em `apps/frontend/`. Comandos Prisma (`db:migrate`, `db:push`, `db:studio`) também usam `.env` e `.env.local`.
+
 Use o mesmo `CLERK_PUBLISHABLE_KEY` no frontend e o `CLERK_SECRET_KEY` apenas no backend. No Clerk Dashboard, defina a role em **publicMetadata** (ex.: `{ "role": "admin" }`) para o usuário admin.
 
 ### 3. Banco de dados (local com Docker)
@@ -89,8 +91,8 @@ API em http://localhost:4000. Frontend continua em `pnpm run dev:frontend` apont
 ## Produção
 
 - Deploy da API e do frontend em instância Oracle Cloud, orquestração via **Coolify**.
-- Banco MySQL configurado no Coolify; conexão via variáveis de ambiente (sem `docker-compose` em produção).
-- Definir `DATABASE_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY` e, se necessário, `FRONTEND_URL` no ambiente de produção.
+- **Banco**: local = MySQL no Docker; produção = MySQL (ex.: Oracle Cloud MySQL HeatWave) via `DATABASE_URL`, ou Oracle com wallet via `TNS_ADMIN`, `DB_USER`, `DB_PASSWORD`, `DB_CONNECTION_STRING` (ver [docs/DEPLOY.md](docs/DEPLOY.md)).
+- Definir no Coolify: `DATABASE_URL` (MySQL), `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY` e, se necessário, `FRONTEND_URL`. Para Oracle com wallet, montar o Persistent Storage no container e configurar as variáveis acima; ver **Deploy** em [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Código e convenções
 

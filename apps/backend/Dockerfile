@@ -1,3 +1,4 @@
+# Production-ready for Coolify. Oracle wallet: mount at /app/wallet and set TNS_ADMIN=/app/wallet.
 FROM node:24-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.14.2 --activate
 WORKDIR /app
@@ -24,4 +25,7 @@ COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/apps/backend/node_modules/.prisma ./node_modules/.prisma
 ENV NODE_ENV=production
 EXPOSE 4000
+# Coolify: set PORT, DATABASE_URL (MySQL) or TNS_ADMIN + DB_USER, DB_PASSWORD, DB_CONNECTION_STRING (Oracle wallet)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:4000/health',r=>{let b='';r.on('data',c=>b+=c);r.on('end',()=>process.exit(r.statusCode===200?0:1))}).on('error',()=>process.exit(1))"
 CMD ["node", "dist/index.js"]
