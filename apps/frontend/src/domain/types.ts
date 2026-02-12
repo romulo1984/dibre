@@ -24,6 +24,7 @@ export interface Player {
   speed: number
   createdAt: string
   updatedAt: string
+  deletedAt?: string | null
 }
 
 export interface PlayerWithParticipation {
@@ -36,6 +37,7 @@ export interface PlayerParticipationGame {
   id: string
   name: string
   createdAt: string
+  deletedAt?: string | null
 }
 
 /** Parceiro de time: jogador + quantas vezes esteve no mesmo time no sorteio */
@@ -59,6 +61,7 @@ export interface Game {
   createdById: string | null
   createdAt: string
   updatedAt: string
+  deletedAt?: string | null
 }
 
 export interface TeamAssignment {

@@ -17,6 +17,7 @@ export interface PlayerEntity extends PlayerAttributes {
   createdById: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
 }
 
 export function validateAttributes(attrs: Partial<PlayerAttributes>): boolean {

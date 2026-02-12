@@ -3,10 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { PlayerProfileStats } from '@/features/players/PlayerProfileStats'
 import { PlayerParticipatedGames } from '@/features/players/PlayerParticipatedGames'
 import { PlayerTopTeammates } from '@/features/players/PlayerTopTeammates'
-import { getPlayer } from '@/services/players.service'
+import { getPlayer, deletePlayer } from '@/services/players.service'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import type { PlayerProfileResponse } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
@@ -18,6 +19,8 @@ export function PlayerDetailPage() {
   const [data, setData] = useState<PlayerProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -40,6 +43,22 @@ export function PlayerDetailPage() {
       cancelled = true
     }
   }, [id, getToken])
+
+  const handleDelete = async () => {
+    if (!id) return
+    setDeleting(true)
+    try {
+      const token = await getToken()
+      if (!token) return
+      await deletePlayer(id, token)
+      navigate('/players')
+    } catch {
+      setError('Erro ao excluir jogador')
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
 
   if (!id) return null
 
@@ -82,6 +101,13 @@ export function PlayerDetailPage() {
             <Link to={`/players/${id}/edit`}>
               <Button variant="outline">Editar</Button>
             </Link>
+            <Button
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              Excluir
+            </Button>
           </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
@@ -111,6 +137,17 @@ export function PlayerDetailPage() {
           </Card.Content>
         </Card.Root>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir jogador"
+        description={`Tem certeza que deseja excluir "${data.player.name}"? O jogador será removido das listagens, mas continuará aparecendo nas estatísticas históricas.`}
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </div>
   )
 }

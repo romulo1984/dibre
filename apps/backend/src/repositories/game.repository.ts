@@ -9,6 +9,7 @@ function toGameEntity(row: {
   createdById: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
 }): GameEntity {
   return {
     id: row.id,
@@ -17,6 +18,7 @@ function toGameEntity(row: {
     createdById: row.createdById,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    deletedAt: row.deletedAt ?? null,
   }
 }
 
@@ -38,7 +40,7 @@ export async function findGameByIdForOwner(
   ownerId: string
 ): Promise<GameEntity | null> {
   const row = await prisma.game.findFirst({
-    where: { id, createdById: ownerId },
+    where: { id, createdById: ownerId, deletedAt: null },
   })
   return row ? toGameEntity(row) : null
 }
@@ -118,6 +120,9 @@ export async function getTeamsByGameId(gameId: string): Promise<TeamRecord[]> {
 }
 
 export async function deleteGame(id: string, ownerId: string): Promise<boolean> {
-  const result = await prisma.game.deleteMany({ where: { id, createdById: ownerId } })
+  const result = await prisma.game.updateMany({
+    where: { id, createdById: ownerId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  })
   return result.count > 0
 }

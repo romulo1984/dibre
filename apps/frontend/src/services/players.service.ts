@@ -45,3 +45,44 @@ export async function updatePlayer(
 export async function deletePlayer(id: string, token: string): Promise<void> {
   return api.delete(`/players/${id}`, token)
 }
+
+export interface ExportedPlayer {
+  name: string
+  stars: number
+  pass: number
+  shot: number
+  defense: number
+  energy: number
+  speed: number
+}
+
+export interface ExportResult {
+  data: string
+  exported: ExportedPlayer[]
+}
+
+export async function exportPlayers(
+  token: string,
+  includeAvatar: boolean,
+  playerIds?: string[]
+): Promise<ExportResult> {
+  let url = `/players/export?avatar=${includeAvatar}`
+  if (playerIds && playerIds.length > 0) {
+    url += `&ids=${playerIds.join(',')}`
+  }
+  return api.get<ExportResult>(url, token)
+}
+
+export interface ImportResult {
+  imported: number
+  skipped: number
+  errors: string[]
+  players: ExportedPlayer[]
+}
+
+export async function importPlayers(
+  data: string,
+  token: string
+): Promise<ImportResult> {
+  return api.post<ImportResult>('/players/import', { data }, token)
+}

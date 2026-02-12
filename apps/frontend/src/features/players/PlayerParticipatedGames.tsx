@@ -43,14 +43,16 @@ export function PlayerParticipatedGames({
           Peladas que participou
         </h3>
         <ul className="space-y-1.5">
-          {games.map((game) => (
-            <li key={game.id}>
-              <Link
-                to={`/peladas/${game.id}`}
+          {games.map((game) => {
+            const isDeleted = !!game.deletedAt
+
+            const row = (
+              <div
                 className={cn(
-                  'grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-3',
-                  'transition-colors hover:border-[var(--color-brand-400)] hover:bg-[var(--surface-secondary)]',
-                  'focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
+                  'group relative grid grid-cols-[1fr_auto_auto] items-center gap-3 rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-3',
+                  !isDeleted &&
+                    'transition-colors hover:border-[var(--color-brand-400)] hover:bg-[var(--surface-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
+                  isDeleted && 'cursor-default opacity-50',
                 )}
               >
                 <span className="min-w-0 truncate font-medium text-[var(--text-primary)]">
@@ -60,11 +62,28 @@ export function PlayerParticipatedGames({
                   {formatGameDate(game.createdAt)}
                 </span>
                 <span className="shrink-0 text-[var(--text-tertiary)]" aria-hidden>
-                  →
+                  {isDeleted ? '' : '→'}
                 </span>
-              </Link>
-            </li>
-          ))}
+                {isDeleted && (
+                  <span className="pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-neutral-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    Pelada excluída
+                  </span>
+                )}
+              </div>
+            )
+
+            return (
+              <li key={game.id}>
+                {isDeleted ? (
+                  row
+                ) : (
+                  <Link to={`/peladas/${game.id}`}>
+                    {row}
+                  </Link>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </section>
     </BlurFade>

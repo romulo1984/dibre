@@ -7,6 +7,7 @@ export interface GameEntity {
   createdById: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
 }
 
 export interface TeamAssignment {

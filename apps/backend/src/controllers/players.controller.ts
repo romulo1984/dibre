@@ -63,6 +63,7 @@ export async function getById(req: Request, res: Response): Promise<void> {
         id: g.id,
         name: g.name,
         createdAt: g.createdAt.toISOString(),
+        deletedAt: g.deletedAt ? g.deletedAt.toISOString() : null,
       })),
       teammates: result.teammates.map((t) => ({
         player: t.player,
@@ -130,5 +131,39 @@ export async function remove(req: Request, res: Response): Promise<void> {
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Failed to delete player' })
+  }
+}
+
+/* ── Export ── */
+
+export async function exportPlayers(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = res.locals.userId as string
+    const includeAvatar = req.query.avatar === 'true'
+    const idsParam = req.query.ids as string | undefined
+    const playerIds = idsParam ? idsParam.split(',').filter(Boolean) : undefined
+    const result = await playerService.exportPlayers(userId, includeAvatar, playerIds)
+    res.json({ data: result.text, exported: result.exported })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to export players' })
+  }
+}
+
+/* ── Import ── */
+
+export async function importPlayers(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = res.locals.userId as string
+    const { data } = req.body
+    if (typeof data !== 'string' || !data.trim()) {
+      res.status(400).json({ error: 'Campo "data" é obrigatório e deve ser texto' })
+      return
+    }
+    const result = await playerService.importPlayers(data, userId)
+    res.json(result)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to import players' })
   }
 }

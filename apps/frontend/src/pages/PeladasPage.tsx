@@ -67,7 +67,7 @@ export function PeladasPage() {
           </div>
         </div>
       ) : (
-        <GameList games={games} />
+        <GameList games={games.filter((g) => !g.deletedAt)} />
       )}
     </div>
   )

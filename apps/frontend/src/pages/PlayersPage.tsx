@@ -45,14 +45,14 @@ export function PlayersPage() {
           <div>
             <PageHeader.Title>Jogadores</PageHeader.Title>
             <PageHeader.Description>
-              {players.length > 0
-                ? `${players.length} jogador(es) cadastrado(s). Clique para ver o perfil.`
+              {players.filter((p) => !p.deletedAt).length > 0
+                ? `${players.filter((p) => !p.deletedAt).length} jogador(es) cadastrado(s). Clique para ver o perfil.`
                 : 'Lista de jogadores com estrelas e atributos. Clique para ver o perfil.'}
             </PageHeader.Description>
           </div>
           <PageHeader.Actions>
             {/* View mode toggle */}
-            {players.length > 0 && (
+            {players.filter((p) => !p.deletedAt).length > 0 && (
               <div className="flex rounded-lg border border-[var(--border-primary)] p-0.5">
                 <button
                   type="button"
@@ -84,6 +84,9 @@ export function PlayersPage() {
                 </button>
               </div>
             )}
+            <Link to="/players/import-export">
+              <Button variant="outline" size="sm">📦 Importar / Exportar</Button>
+            </Link>
             <Link to="/players/new">
               <Button variant="primary">Novo jogador</Button>
             </Link>
@@ -105,7 +108,7 @@ export function PlayersPage() {
           </div>
         </div>
       ) : (
-        <PlayerList players={players} viewMode={viewMode} />
+        <PlayerList players={players.filter((p) => !p.deletedAt)} viewMode={viewMode} />
       )}
     </div>
   )

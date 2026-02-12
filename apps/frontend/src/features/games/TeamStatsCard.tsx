@@ -42,26 +42,36 @@ export function TeamStatsCard({ team, playersMap }: TeamStatsCardProps) {
                     </li>
                   )
                 }
+                const isDeleted = !!player.deletedAt
                 return (
                   <li key={id}>
-                    <PlayerRow
-                      player={player}
-                      showAttributesOnHover
-                      playerWithAttrs={player}
-                      children={
-                        (is5 || is1) && (
-                          <span
-                            className={cn(
-                              'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold',
-                              is5 && 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
-                              is1 && 'bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300',
+                    <div className={cn('group relative', isDeleted && 'opacity-50')}>
+                      <PlayerRow
+                        player={player}
+                        showAttributesOnHover={!isDeleted}
+                        playerWithAttrs={player}
+                        children={
+                          <>
+                            {(is5 || is1) && (
+                              <span
+                                className={cn(
+                                  'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                                  is5 && 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+                                  is1 && 'bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-300',
+                                )}
+                              >
+                                {is5 ? '5★' : '1★'}
+                              </span>
                             )}
-                          >
-                            {is5 ? '5★' : '1★'}
-                          </span>
-                        )
-                      }
-                    />
+                          </>
+                        }
+                      />
+                      {isDeleted && (
+                        <span className="pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-neutral-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                          Jogador excluído
+                        </span>
+                      )}
+                    </div>
                   </li>
                 )
               })}

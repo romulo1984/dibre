@@ -4,6 +4,7 @@ import { useAuthToken } from '@/hooks/useAuthToken'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { TeamStatsCard } from '@/features/games/TeamStatsCard'
 import { PlayerRow } from '@/features/players/PlayerRow'
 import { ShimmerButton } from '@/components/magicui/shimmer-button'
@@ -15,6 +16,7 @@ import {
   getGameTeams,
   setGamePlayers,
   runDraw,
+  deleteGame,
 } from '@/services/games.service'
 import { listPlayers } from '@/services/players.service'
 import type { Game, TeamAssignment, Player } from '@/domain/types'
@@ -51,6 +53,8 @@ export function PeladaDetailPage() {
   const [drawLoading, setDrawLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -86,6 +90,23 @@ export function PeladaDetailPage() {
   }, [id, getToken])
 
   const playersMap = new Map(allPlayers.map((p) => [p.id, p]))
+  const activePlayers = allPlayers.filter((p) => !p.deletedAt)
+
+  const handleDeleteGame = async () => {
+    if (!id) return
+    setDeleting(true)
+    try {
+      const token = await getToken()
+      if (!token) return
+      await deleteGame(id, token)
+      navigate('/peladas')
+    } catch {
+      setError('Erro ao excluir pelada')
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
 
   const handleSetPlayers = async (selectedIds: string[]) => {
     if (!id) return
@@ -166,6 +187,13 @@ export function PeladaDetailPage() {
                   '🎲 Sortear'
                 )}
               </ShimmerButton>
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                Excluir
+              </Button>
           </PageHeader.Actions>
         </PageHeader.Root>
       </BlurFade>
@@ -183,13 +211,13 @@ export function PeladaDetailPage() {
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <Card.Title>Selecionar jogadores</Card.Title>
               <span className="text-xs font-medium text-[var(--text-tertiary)] sm:text-sm">
-                {playerIds.length} de {allPlayers.length} selecionado(s)
+                {playerIds.length} de {activePlayers.length} selecionado(s)
               </span>
             </div>
           </Card.Header>
           <Card.Content>
             <PeladaPlayerSelect
-              allPlayers={allPlayers}
+              allPlayers={activePlayers}
               selectedIds={playerIds}
               onChange={handleSetPlayers}
             />
@@ -250,6 +278,17 @@ export function PeladaDetailPage() {
           </div>
         </section>
       )}
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir pelada"
+        description={`Tem certeza que deseja excluir "${game.name}"? A pelada será removida das listagens, mas continuará aparecendo no histórico dos jogadores.`}
+        confirmLabel="Excluir"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDeleteGame}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </div>
   )
 }

@@ -14,6 +14,7 @@ function toEntity(row: {
   createdById: string | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
 }): PlayerEntity {
   return {
     id: row.id,
@@ -28,6 +29,7 @@ function toEntity(row: {
     createdById: row.createdById ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    deletedAt: row.deletedAt ?? null,
   }
 }
 
@@ -49,7 +51,7 @@ export async function findPlayerByIdForOwner(
   ownerId: string
 ): Promise<PlayerEntity | null> {
   const row = await prisma.player.findFirst({
-    where: { id, createdById: ownerId },
+    where: { id, createdById: ownerId, deletedAt: null },
   })
   return row ? toEntity(row) : null
 }
@@ -94,7 +96,7 @@ export async function updatePlayer(
 
 export async function deletePlayer(id: string): Promise<boolean> {
   try {
-    await prisma.player.delete({ where: { id } })
+    await prisma.player.update({ where: { id }, data: { deletedAt: new Date() } })
     return true
   } catch (e: unknown) {
     if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2025')
@@ -111,6 +113,7 @@ export interface ParticipatedGameRow {
   id: string
   name: string
   createdAt: Date
+  deletedAt: Date | null
 }
 
 /** Lista peladas em que o jogador participou (do mesmo dono), mais recentes primeiro. */
@@ -125,7 +128,7 @@ export async function findParticipatedGames(
     },
     include: {
       game: {
-        select: { id: true, name: true, createdAt: true },
+        select: { id: true, name: true, createdAt: true, deletedAt: true },
       },
     },
     orderBy: { game: { createdAt: 'desc' } },
@@ -134,5 +137,6 @@ export async function findParticipatedGames(
     id: r.game.id,
     name: r.game.name,
     createdAt: r.game.createdAt,
+    deletedAt: r.game.deletedAt ?? null,
   }))
 }

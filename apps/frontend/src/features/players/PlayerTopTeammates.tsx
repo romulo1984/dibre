@@ -38,37 +38,58 @@ export function PlayerTopTeammates({
           Quem mais jogou no mesmo time no sorteio
         </p>
         <ul className="space-y-2">
-          {teammates.map(({ player, timesTogether }, index) => (
-            <li key={player.id}>
-              <Link
-                to={`/players/${player.id}`}
-                className={cn(
-                  'block rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-3',
-                  'transition-colors hover:border-[var(--color-brand-400)] hover:bg-[var(--surface-secondary)]/50',
-                  'focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
-                )}
-              >
-                <PlayerRow
-                  player={player}
-                  showAttributesOnHover
-                  playerWithAttrs={player}
-                  prefix={
-                    <span
-                      className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-tertiary)] text-xs font-bold text-[var(--text-tertiary)]"
-                      aria-hidden
-                    >
-                      {index + 1}
-                    </span>
-                  }
-                  avatarSize="md"
+          {teammates.map(({ player, timesTogether }, index) => {
+            const isDeleted = !!player.deletedAt
+
+            const content = (
+              <div className={cn('group relative', isDeleted && 'opacity-50')}>
+                <div
+                  className={cn(
+                    'block rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-3',
+                    !isDeleted &&
+                      'transition-colors hover:border-[var(--color-brand-400)] hover:bg-[var(--surface-secondary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
+                    isDeleted && 'cursor-default',
+                  )}
                 >
-                  <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand-700)]">
-                    {timesTogether} {timesTogether === 1 ? 'vez' : 'vezes'}
+                  <PlayerRow
+                    player={player}
+                    showAttributesOnHover={!isDeleted}
+                    playerWithAttrs={player}
+                    prefix={
+                      <span
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-tertiary)] text-xs font-bold text-[var(--text-tertiary)]"
+                        aria-hidden
+                      >
+                        {index + 1}
+                      </span>
+                    }
+                    avatarSize="md"
+                  >
+                    <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand-700)]">
+                      {timesTogether} {timesTogether === 1 ? 'vez' : 'vezes'}
+                    </span>
+                  </PlayerRow>
+                </div>
+                {isDeleted && (
+                  <span className="pointer-events-none absolute -top-8 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg bg-neutral-900 px-2.5 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    Jogador excluído
                   </span>
-                </PlayerRow>
-              </Link>
-            </li>
-          ))}
+                )}
+              </div>
+            )
+
+            return (
+              <li key={player.id}>
+                {isDeleted ? (
+                  content
+                ) : (
+                  <Link to={`/players/${player.id}`}>
+                    {content}
+                  </Link>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </section>
     </BlurFade>

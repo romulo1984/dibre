@@ -10,6 +10,8 @@ router.use(clerkMiddleware())
 
 // ---- Players (todos exigem login; escopo por dono) ----
 router.get('/players', requireAuth, playersController.list)
+router.get('/players/export', requireAuth, playersController.exportPlayers)
+router.post('/players/import', requireAuth, playersController.importPlayers)
 router.get('/players/:id', requireAuth, playersController.getById)
 router.post('/players', requireAuth, playersController.create)
 router.patch('/players/:id', requireAuth, playersController.update)

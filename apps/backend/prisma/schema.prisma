@@ -29,31 +29,33 @@ model User {
 }
 
 model Player {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  avatarUrl   String?  @db.MediumText // URL ou data URL (base64) da foto/avatar
-  stars       Int      // 1-5 overall level
-  pass        Int      // 1-5
-  shot        Int      // 1-5
-  defense     Int      // 1-5
-  energy      Int      // 1-5
-  speed       Int      // 1-5
+  avatarUrl   String?   @db.MediumText // URL ou data URL (base64) da foto/avatar
+  stars       Int       // 1-5 overall level
+  pass        Int       // 1-5
+  shot        Int       // 1-5
+  defense     Int       // 1-5
+  energy      Int       // 1-5
+  speed       Int       // 1-5
   createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // soft delete
   participations GamePlayer[]
   @@index([createdById])
 }
 
 model Game {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
-  numberOfTeams Int      // 2, 3, etc.
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  numberOfTeams Int       // 2, 3, etc.
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? // soft delete
   createdById   String?
-  createdBy     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
   players       GamePlayer[]
   teams         Team[]
   @@index([createdById])

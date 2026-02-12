@@ -10,6 +10,7 @@ import { PlayerEditPage } from '@/pages/PlayerEditPage'
 import { PeladasPage } from '@/pages/PeladasPage'
 import { PeladaDetailPage } from '@/pages/PeladaDetailPage'
 import { PeladaNewPage } from '@/pages/PeladaNewPage'
+import { PlayersImportExportPage } from '@/pages/PlayersImportExportPage'
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() || ''
 
@@ -22,6 +23,7 @@ function AppContent() {
           <Route element={<RequireAuth />}>
             <Route path="players" element={<PlayersPage />} />
             <Route path="players/new" element={<PlayerNewPage />} />
+            <Route path="players/import-export" element={<PlayersImportExportPage />} />
             <Route path="players/:id" element={<PlayerDetailPage />} />
             <Route path="players/:id/edit" element={<PlayerEditPage />} />
             <Route path="peladas" element={<PeladasPage />} />

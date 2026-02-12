@@ -7,6 +7,7 @@ export interface PlayerProfileGame {
   id: string
   name: string
   createdAt: Date
+  deletedAt: Date | null
 }
 
 export interface PlayerProfileTeammate {
@@ -146,4 +147,128 @@ export async function deletePlayer(
   const ok = await playerRepo.deletePlayer(id)
   if (!ok) return { error: 'Player not found' }
   return { ok: true }
+}
+
+/* ── Export / Import ── */
+
+/**
+ * Formato de linha: Nome;estrelas,passe,chute,defesa,energia,velocidade[,base64]
+ * Retrocompatível: se não tiver a 7ª coluna (avatar), importa sem imagem.
+ */
+
+export async function exportPlayers(
+  ownerId: string,
+  includeAvatar: boolean,
+  playerIds?: string[]
+): Promise<{ text: string; exported: Array<{ name: string; stars: number; pass: number; shot: number; defense: number; energy: number; speed: number }> }> {
+  let players = await playerRepo.findAllPlayersByOwner(ownerId)
+  // Excluir jogadores deletados da exportação
+  players = players.filter((p) => !p.deletedAt)
+  if (playerIds && playerIds.length > 0) {
+    const idSet = new Set(playerIds)
+    players = players.filter((p) => idSet.has(p.id))
+  }
+  const exported = players.map((p) => ({
+    name: p.name,
+    stars: p.stars,
+    pass: p.pass,
+    shot: p.shot,
+    defense: p.defense,
+    energy: p.energy,
+    speed: p.speed,
+  }))
+  const lines = players.map((p) => {
+    const attrs = [p.stars, p.pass, p.shot, p.defense, p.energy, p.speed].join(',')
+    if (includeAvatar && p.avatarUrl) {
+      return `${p.name};${attrs},${p.avatarUrl}`
+    }
+    return `${p.name};${attrs}`
+  })
+  return { text: lines.join('\n'), exported }
+}
+
+export interface ImportedPlayer {
+  name: string
+  stars: number
+  pass: number
+  shot: number
+  defense: number
+  energy: number
+  speed: number
+}
+
+export interface ImportResult {
+  imported: number
+  skipped: number
+  errors: string[]
+  players: ImportedPlayer[]
+}
+
+export async function importPlayers(
+  text: string,
+  ownerId: string
+): Promise<ImportResult> {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  const result: ImportResult = { imported: 0, skipped: 0, errors: [], players: [] }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const lineNum = i + 1
+    const sepIdx = line.indexOf(';')
+    if (sepIdx === -1) {
+      result.errors.push(`Linha ${lineNum}: formato inválido (faltando ";")`)
+      result.skipped++
+      continue
+    }
+
+    const name = line.substring(0, sepIdx).trim()
+    const rest = line.substring(sepIdx + 1)
+
+    if (!name) {
+      result.errors.push(`Linha ${lineNum}: nome vazio`)
+      result.skipped++
+      continue
+    }
+
+    // Extrair avatar base64 se presente (começa com "data:")
+    let avatarUrl: string | null = null
+    let attrsPart = rest
+
+    const dataIdx = rest.indexOf(',data:')
+    if (dataIdx !== -1) {
+      attrsPart = rest.substring(0, dataIdx)
+      avatarUrl = rest.substring(dataIdx + 1)
+    }
+
+    const parts = attrsPart.split(',').map((s) => parseInt(s.trim(), 10))
+    if (parts.length < 6 || parts.some(isNaN)) {
+      result.errors.push(`Linha ${lineNum}: atributos inválidos (esperado 6 números)`)
+      result.skipped++
+      continue
+    }
+
+    const [stars, pass, shot, defense, energy, speed] = parts
+    const attrs = { stars, pass, shot, defense, energy, speed }
+    if (!validateAttributes(attrs)) {
+      result.errors.push(`Linha ${lineNum}: atributos fora do intervalo 1-5`)
+      result.skipped++
+      continue
+    }
+
+    try {
+      await playerRepo.createPlayer({
+        name,
+        avatarUrl,
+        createdById: ownerId,
+        ...attrs,
+      })
+      result.imported++
+      result.players.push({ name, ...attrs })
+    } catch (err) {
+      result.errors.push(`Linha ${lineNum}: erro ao salvar "${name}"`)
+      result.skipped++
+    }
+  }
+
+  return result
 }

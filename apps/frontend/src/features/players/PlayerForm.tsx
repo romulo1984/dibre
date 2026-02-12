@@ -46,6 +46,7 @@ export function PlayerForm({ initial, onSubmit, onCancel }: PlayerFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -160,49 +161,79 @@ export function PlayerForm({ initial, onSubmit, onCancel }: PlayerFormProps) {
         <p className="mb-3 text-xs text-[var(--text-tertiary)]">
           A imagem será recortada e comprimida (proporção 3×4).
         </p>
+
+        {/* Inputs ocultos: galeria e câmera */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
         {avatarUrl && (avatarUrl.startsWith('data:') || avatarUrl.startsWith('http')) ? (
-          <div className="flex flex-wrap items-center gap-4">
-            <PlayerAvatar
-              player={{ name: name || 'Jogador', avatarUrl }}
-              size="md"
-              className="rounded-lg ring-2 ring-[var(--color-brand-200)] ring-offset-2 ring-offset-[var(--surface-primary)]"
-            />
-            <div className="flex flex-col gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-secondary)]">
+            {/* Preview grande da foto */}
+            <div className="flex items-center justify-center bg-[var(--surface-tertiary)] p-6">
+              <PlayerAvatar
+                player={{ name: name || 'Jogador', avatarUrl }}
+                variant="rect"
+                size="lg"
+                className="rounded-xl shadow-lg ring-2 ring-[var(--color-brand-200)] ring-offset-4 ring-offset-[var(--surface-tertiary)]"
               />
+            </div>
+
+            {/* Ações */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border-primary)] p-3">
               <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                Trocar foto
+                🖼️ Galeria
               </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => cameraInputRef.current?.click()}>
+                📷 Câmera
+              </Button>
+              <div className="flex-1" />
               <Button type="button" variant="ghost" size="sm" onClick={() => setAvatarUrl('')} className="text-red-600">
                 Remover
               </Button>
             </div>
+
+            {/* Base64 readonly */}
+            {avatarUrl.startsWith('data:') && (
+              <div className="border-t border-[var(--border-primary)] p-3">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
+                  Base64 da imagem
+                </label>
+                <textarea
+                  readOnly
+                  value={avatarUrl}
+                  rows={3}
+                  className="w-full resize-none rounded-lg border border-[var(--border-primary)] bg-[var(--surface-primary)] px-3 py-2 font-mono text-[10px] text-[var(--text-tertiary)] focus:outline-none"
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="space-y-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-              Escolher imagem
-            </Button>
-            <p className="text-sm text-[var(--text-tertiary)]">ou cole uma URL:</p>
-            <input
-              type="url"
-              value={avatarUrl ?? ''}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              className={inputClasses}
-              placeholder="https://..."
-            />
+          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-[var(--border-secondary)] bg-[var(--surface-tertiary)] p-8">
+            <div className="flex size-20 items-center justify-center rounded-full bg-[var(--surface-secondary)]">
+              <span className="text-3xl text-[var(--text-tertiary)]">📸</span>
+            </div>
+            <p className="text-sm text-[var(--text-tertiary)]">Adicione uma foto do jogador</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                🖼️ Galeria
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => cameraInputRef.current?.click()}>
+                📷 Câmera
+              </Button>
+            </div>
           </div>
         )}
         {avatarError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{avatarError}</p>}
