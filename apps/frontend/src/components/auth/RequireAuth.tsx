@@ -5,7 +5,7 @@ import { ShimmerButton } from '@/components/magicui/shimmer-button'
 import { SignInButton } from '@clerk/clerk-react'
 
 /**
- * Protege rotas que exigem usuário logado (jogadores, peladas, sorteios).
+ * Protege rotas que exigem usuário logado (jogadores, games, sorteios).
  * Se não estiver logado, mostra mensagem e botão de entrar.
  */
 export function RequireAuth() {

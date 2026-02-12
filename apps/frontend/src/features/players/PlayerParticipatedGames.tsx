@@ -77,7 +77,7 @@ export function PlayerParticipatedGames({
                 {isDeleted ? (
                   row
                 ) : (
-                  <Link to={`/peladas/${game.id}`}>
+                  <Link to={`/games/${game.id}`}>
                     {row}
                   </Link>
                 )}

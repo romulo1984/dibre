@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 const navLinks = [
   { to: '/players', label: 'Jogadores' },
-  { to: '/peladas', label: 'Peladas' },
+  { to: '/games', label: 'Peladas' },
 ]
 
 export function Layout() {

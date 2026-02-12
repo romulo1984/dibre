@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button/Button'
 import { DateTimeField } from '@/components/ui/DateTimeField'
 import { TeamsNumberInput } from '@/components/ui/TeamsNumberInput'
 import { createGame } from '@/services/games.service'
-import { formatPeladaDate, parseDateTimeLocal } from '@/utils/dateFormat'
+import { formatGameDate, parseDateTimeLocal } from '@/utils/dateFormat'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
 const inputClasses =
@@ -15,9 +15,9 @@ const inputClasses =
 
 const labelClasses = 'mb-1.5 block text-sm font-medium text-[var(--text-secondary)]'
 
-function buildPeladaName(nameTrimmed: string, dateTimeValue: string): string {
+function buildGameName(nameTrimmed: string, dateTimeValue: string): string {
   const date = parseDateTimeLocal(dateTimeValue)
-  const dateStr = date ? formatPeladaDate(date) : ''
+  const dateStr = date ? formatGameDate(date) : ''
 
   if (nameTrimmed && dateStr) {
     return `${nameTrimmed} (${dateStr})`
@@ -28,7 +28,7 @@ function buildPeladaName(nameTrimmed: string, dateTimeValue: string): string {
   return nameTrimmed
 }
 
-export function PeladaNewPage() {
+export function GameNewPage() {
   const navigate = useNavigate()
   const getToken = useAuthToken()
   const [name, setName] = useState('')
@@ -57,14 +57,14 @@ export function PeladaNewPage() {
       return
     }
 
-    const finalName = buildPeladaName(nameTrimmed, dateTime)
+    const finalName = buildGameName(nameTrimmed, dateTime)
 
     setLoading(true)
     try {
       const token = await getToken()
       if (!token) throw new Error('Não autenticado')
       const game = await createGame({ name: finalName, numberOfTeams }, token)
-      navigate(`/peladas/${game.id}`)
+      navigate(`/games/${game.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao criar')
     } finally {
@@ -136,7 +136,7 @@ export function PeladaNewPage() {
                 <Button type="submit" loading={loading}>
                   Criar pelada
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/peladas')}>
+                <Button type="button" variant="outline" onClick={() => navigate('/games')}>
                   Cancelar
                 </Button>
               </div>

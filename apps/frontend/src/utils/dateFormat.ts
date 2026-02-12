@@ -1,7 +1,7 @@
 /**
  * Formata uma data para exibição em pt-BR: "quarta-feira, 11 de fevereiro de 2026"
  */
-export function formatPeladaDate(date: Date): string {
+export function formatGameDate(date: Date): string {
   return date.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',

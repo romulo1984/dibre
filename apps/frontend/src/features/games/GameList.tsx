@@ -25,7 +25,7 @@ export function GameList({ games }: GameListProps) {
       {games.map((game, i) => (
         <BlurFade key={game.id} delay={0.05 * i} inView>
           <li>
-            <Link to={`/peladas/${game.id}`} className="block">
+            <Link to={`/games/${game.id}`} className="block">
               <MagicCard
                 className="group p-6 transition-shadow hover:shadow-lg"
                 gradientColor="var(--color-brand-50)"

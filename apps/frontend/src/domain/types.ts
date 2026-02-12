@@ -32,7 +32,7 @@ export interface PlayerWithParticipation {
   participationCount: number
 }
 
-/** Pelada em que o jogador participou (resumo para listagem) */
+/** Game em que o jogador participou (resumo para listagem) */
 export interface PlayerParticipationGame {
   id: string
   name: string

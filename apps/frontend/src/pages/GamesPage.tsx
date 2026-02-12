@@ -8,7 +8,7 @@ import { useAuthToken } from '@/hooks/useAuthToken'
 import type { Game } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 
-export function PeladasPage() {
+export function GamesPage() {
   const getToken = useAuthToken()
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +46,7 @@ export function PeladasPage() {
             </PageHeader.Description>
           </div>
           <PageHeader.Actions>
-            <Link to="/peladas/new">
+            <Link to="/games/new">
               <Button variant="primary">Nova pelada</Button>
             </Link>
           </PageHeader.Actions>

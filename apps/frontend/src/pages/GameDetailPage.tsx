@@ -41,7 +41,7 @@ function formatTeamsForShare(teams: TeamAssignment[], playersMap: Map<string, Pl
   return lines.join('\n')
 }
 
-export function PeladaDetailPage() {
+export function GameDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const getToken = useAuthToken()
@@ -99,7 +99,7 @@ export function PeladaDetailPage() {
       const token = await getToken()
       if (!token) return
       await deleteGame(id, token)
-      navigate('/peladas')
+      navigate('/games')
     } catch {
       setError('Erro ao excluir pelada')
     } finally {
@@ -153,7 +153,7 @@ export function PeladaDetailPage() {
       <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-900/20">
         <span className="mb-2 text-3xl">😕</span>
         <p className="font-medium text-red-700 dark:text-red-400">{error}</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/peladas')}>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/games')}>
           Voltar
         </Button>
       </div>
@@ -216,7 +216,7 @@ export function PeladaDetailPage() {
             </div>
           </Card.Header>
           <Card.Content>
-            <PeladaPlayerSelect
+            <GamePlayerSelect
               allPlayers={activePlayers}
               selectedIds={playerIds}
               onChange={handleSetPlayers}
@@ -295,7 +295,7 @@ export function PeladaDetailPage() {
 
 /* ── Internal: Player checkbox selector (lista vertical, avatar, selecionar todos) ── */
 
-function PeladaPlayerSelect({
+function GamePlayerSelect({
   allPlayers,
   selectedIds,
   onChange,

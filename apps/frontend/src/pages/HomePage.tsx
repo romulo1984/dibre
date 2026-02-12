@@ -57,7 +57,7 @@ export function HomePage() {
                 </ShimmerButton>
               </Link>
               <Link
-                to="/peladas"
+                to="/games"
                 className="inline-flex h-12 items-center rounded-xl border border-[var(--border-secondary)] bg-[var(--surface-primary)] px-8 text-base font-semibold text-[var(--text-primary)] shadow-sm transition-all hover:bg-[var(--surface-tertiary)] hover:shadow-md"
               >
                 Criar pelada
@@ -119,7 +119,7 @@ export function HomePage() {
                 description:
                   'Defina o nome da pelada e o número de times. Selecione os jogadores que vão participar da partida.',
                 icon: '📋',
-                link: '/peladas/new',
+                link: '/games/new',
               },
               {
                 step: '3',
@@ -127,7 +127,7 @@ export function HomePage() {
                 description:
                   'O algoritmo distribui os jogadores de forma equilibrada, garantindo que todos os times tenham médias similares.',
                 icon: '🎲',
-                link: '/peladas',
+                link: '/games',
               },
             ].map((feature, i) => (
               <BlurFade key={feature.step} delay={0.15 + i * 0.1}>
@@ -166,7 +166,7 @@ export function HomePage() {
             Faça login, cadastre seus jogadores e nunca mais tenha times desbalanceados.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <Link to="/peladas/new">
+            <Link to="/games/new">
               <ShimmerButton className="h-11 px-6 font-semibold shadow-lg">
                 Criar pelada agora
               </ShimmerButton>
