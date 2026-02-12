@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { Logo } from '@/components/ui/Logo'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
@@ -10,6 +11,7 @@ const navLinks = [
 
 export function Layout() {
   const location = useLocation()
+  useScrollToTop()
 
   return (
     <div className="min-h-screen bg-[var(--surface-secondary)]">

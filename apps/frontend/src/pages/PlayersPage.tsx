@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
@@ -10,12 +10,35 @@ import type { Player } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
 import { cn } from '@/lib/utils'
 
+function starsString(count: number): string {
+  return '⭐'.repeat(count)
+}
+
+function formatPlayersForShare(players: Player[]): string {
+  const lines: string[] = []
+  lines.push('⚽ Lista de Jogadores — dib.re')
+  lines.push(`📋 ${players.length} jogador(es)`)
+  lines.push('')
+
+  players.forEach((p) => {
+    const stars = starsString(p.stars)
+    const attrs = `PAS ${p.pass} | CHU ${p.shot} | DEF ${p.defense} | ENG ${p.energy} | VEL ${p.speed}`
+    lines.push(`*${p.name}* ${stars}`)
+    lines.push(`${attrs}`)
+  })
+
+  lines.push('')
+  lines.push('Gerado por dib.re — Sorteio equilibrado de times')
+  return lines.join('\n')
+}
+
 export function PlayersPage() {
   const getToken = useAuthToken()
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<PlayerListViewMode>('cards')
+  const [viewMode, setViewMode] = useState<PlayerListViewMode>('list')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -38,6 +61,21 @@ export function PlayersPage() {
     }
   }, [getToken])
 
+  const activePlayers = players.filter((p) => !p.deletedAt)
+
+  const handleCopyList = useCallback(() => {
+    const text = formatPlayersForShare(activePlayers)
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [activePlayers])
+
+  const handleShareList = useCallback(() => {
+    const text = formatPlayersForShare(activePlayers)
+    navigator.share({ text }).catch(() => {})
+  }, [activePlayers])
+
   return (
     <div className="space-y-6">
       <BlurFade delay={0.1}>
@@ -45,14 +83,14 @@ export function PlayersPage() {
           <div>
             <PageHeader.Title>Jogadores</PageHeader.Title>
             <PageHeader.Description>
-              {players.filter((p) => !p.deletedAt).length > 0
-                ? `${players.filter((p) => !p.deletedAt).length} jogador(es) cadastrado(s). Clique para ver o perfil.`
+              {activePlayers.length > 0
+                ? `${activePlayers.length} jogador(es) cadastrado(s). Clique para ver o perfil.`
                 : 'Lista de jogadores com estrelas e atributos. Clique para ver o perfil.'}
             </PageHeader.Description>
           </div>
           <PageHeader.Actions>
             {/* View mode toggle */}
-            {players.filter((p) => !p.deletedAt).length > 0 && (
+            {activePlayers.length > 0 && (
               <div className="flex rounded-lg border border-[var(--border-primary)] p-0.5">
                 <button
                   type="button"
@@ -108,7 +146,43 @@ export function PlayersPage() {
           </div>
         </div>
       ) : (
-        <PlayerList players={players.filter((p) => !p.deletedAt)} viewMode={viewMode} />
+        <>
+          <PlayerList players={activePlayers} viewMode={viewMode} />
+
+          {/* Compartilhar lista */}
+          {activePlayers.length > 0 && (
+            <BlurFade delay={0.2}>
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-3">
+                <span className="mr-1 text-sm font-medium text-[var(--text-secondary)]">
+                  📋 Compartilhar lista
+                </span>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyList}
+                  >
+                    {copied ? '✅ Copiado!' : '📋 Copiar'}
+                  </Button>
+                  {copied && (
+                    <span className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[var(--surface-inverse)] px-3 py-1.5 text-xs font-medium text-[var(--text-inverse)] shadow-lg">
+                      Lista copiada!
+                    </span>
+                  )}
+                </div>
+                {typeof navigator.share === 'function' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShareList}
+                  >
+                    📤 Compartilhar
+                  </Button>
+                )}
+              </div>
+            </BlurFade>
+          )}
+        </>
       )}
     </div>
   )

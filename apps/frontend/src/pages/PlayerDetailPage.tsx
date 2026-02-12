@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { PlayerProfileStats } from '@/features/players/PlayerProfileStats'
 import { PlayerParticipatedGames } from '@/features/players/PlayerParticipatedGames'
 import { PlayerTopTeammates } from '@/features/players/PlayerTopTeammates'
+import { PlayerExportCard } from '@/features/players/PlayerExportCard'
 import { getPlayer, deletePlayer } from '@/services/players.service'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import type { PlayerProfileResponse } from '@/domain/types'
@@ -21,6 +22,7 @@ export function PlayerDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showExportCard, setShowExportCard] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -119,6 +121,7 @@ export function PlayerDetailPage() {
             <PlayerProfileStats
               player={data.player}
               participationCount={data.participationCount}
+              onExportCard={() => setShowExportCard(true)}
             />
           </Card.Content>
         </Card.Root>
@@ -137,6 +140,14 @@ export function PlayerDetailPage() {
           </Card.Content>
         </Card.Root>
       </div>
+
+      {/* Modal do Card de Exportação */}
+      <PlayerExportCard
+        player={data.player}
+        participationCount={data.participationCount}
+        open={showExportCard}
+        onClose={() => setShowExportCard(false)}
+      />
 
       <ConfirmDialog
         open={showDeleteDialog}
