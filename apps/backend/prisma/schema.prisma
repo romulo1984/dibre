@@ -77,7 +77,7 @@ model Team {
   game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   name          String   // e.g. "Time A", "Time B"
   order         Int      // 1, 2, 3...
-  playerIds     String   // JSON array of player IDs for this team
+  playerIds     Json     // JSON array of player IDs for this team
   avgStars      Float?
   avgPass       Float?
   avgShot       Float?

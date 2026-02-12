@@ -76,7 +76,7 @@ export async function saveTeams(gameId: string, assignments: TeamAssignment[]): 
       gameId,
       name: t.teamName,
       order: t.order,
-      playerIds: JSON.stringify(t.playerIds),
+      playerIds: t.playerIds,
       avgStars: t.avgStars,
       avgPass: t.avgPass,
       avgShot: t.avgShot,
@@ -96,7 +96,7 @@ export async function getTeamsByGameId(gameId: string): Promise<TeamRecord[]> {
     (r: {
       name: string
       order: number
-      playerIds: string
+      playerIds: string[] | unknown
       avgStars: number | null
       avgPass: number | null
       avgShot: number | null
@@ -106,7 +106,7 @@ export async function getTeamsByGameId(gameId: string): Promise<TeamRecord[]> {
     }) => ({
       teamName: r.name,
       order: r.order,
-      playerIds: JSON.parse(r.playerIds) as string[],
+      playerIds: r.playerIds as string[],
       avgStars: r.avgStars ?? 0,
       avgPass: r.avgPass ?? 0,
       avgShot: r.avgShot ?? 0,
