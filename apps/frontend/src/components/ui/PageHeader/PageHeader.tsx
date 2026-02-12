@@ -20,7 +20,7 @@ function Root({ children, className = '' }: { children: ReactNode; className?: s
 
 function Title({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <h1 className={cn('text-2xl font-bold tracking-tight text-[var(--text-primary)]', className)}>
+    <h1 className={cn('text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl', className)}>
       {children}
     </h1>
   )

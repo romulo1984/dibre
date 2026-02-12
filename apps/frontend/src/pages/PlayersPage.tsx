@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { PlayerList } from '@/features/players/PlayerList'
+import type { PlayerListViewMode } from '@/features/players/PlayerList'
 import { listPlayers } from '@/services/players.service'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import type { Player } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
+import { cn } from '@/lib/utils'
 
 export function PlayersPage() {
   const getToken = useAuthToken()
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<PlayerListViewMode>('cards')
 
   useEffect(() => {
     let cancelled = false
@@ -42,10 +45,45 @@ export function PlayersPage() {
           <div>
             <PageHeader.Title>Jogadores</PageHeader.Title>
             <PageHeader.Description>
-              Lista de jogadores com estrelas e atributos. Clique para ver o perfil.
+              {players.length > 0
+                ? `${players.length} jogador(es) cadastrado(s). Clique para ver o perfil.`
+                : 'Lista de jogadores com estrelas e atributos. Clique para ver o perfil.'}
             </PageHeader.Description>
           </div>
           <PageHeader.Actions>
+            {/* View mode toggle */}
+            {players.length > 0 && (
+              <div className="flex rounded-lg border border-[var(--border-primary)] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={cn(
+                    'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
+                    viewMode === 'cards'
+                      ? 'bg-[var(--color-brand-500)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                  )}
+                  aria-label="Visualizar como cards"
+                  title="Cards"
+                >
+                  ▦
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
+                    viewMode === 'list'
+                      ? 'bg-[var(--color-brand-500)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                  )}
+                  aria-label="Visualizar como lista"
+                  title="Lista"
+                >
+                  ☰
+                </button>
+              </div>
+            )}
             <Link to="/players/new">
               <Button variant="primary">Novo jogador</Button>
             </Link>
@@ -67,7 +105,7 @@ export function PlayersPage() {
           </div>
         </div>
       ) : (
-        <PlayerList players={players} />
+        <PlayerList players={players} viewMode={viewMode} />
       )}
     </div>
   )

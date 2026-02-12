@@ -19,6 +19,26 @@ import {
 import { listPlayers } from '@/services/players.service'
 import type { Game, TeamAssignment, Player } from '@/domain/types'
 
+function formatTeamsForShare(teams: TeamAssignment[], playersMap: Map<string, Player>): string {
+  const starsEmoji = (n: number) => '⭐'.repeat(n)
+  const lines: string[] = ['⚽ *Sorteio de Times* ⚽', '']
+  teams.forEach((team) => {
+    lines.push(`🏆 *${team.teamName}* (${team.playerIds.length} jogadores)`)
+    lines.push('―'.repeat(20))
+    team.playerIds.forEach((id) => {
+      const p = playersMap.get(id)
+      if (p) {
+        lines.push(`  ${p.name} ${starsEmoji(p.stars)}`)
+      }
+    })
+    lines.push(
+      `  📊 Médias: PAS ${team.avgPass.toFixed(1)} | CHU ${team.avgShot.toFixed(1)} | DEF ${team.avgDefense.toFixed(1)} | ENE ${team.avgEnergy.toFixed(1)} | VEL ${team.avgSpeed.toFixed(1)}`,
+    )
+    lines.push('')
+  })
+  return lines.join('\n')
+}
+
 export function PeladaDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -30,6 +50,7 @@ export function PeladaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [drawLoading, setDrawLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -132,7 +153,7 @@ export function PeladaDetailPage() {
           </div>
           <PageHeader.Actions>
               <ShimmerButton
-                className="h-10 px-5 text-sm font-semibold shadow-lg disabled:opacity-50"
+                className="h-9 px-3 text-xs font-semibold shadow-lg disabled:opacity-50 sm:h-10 sm:px-5 sm:text-sm"
                 disabled={playerIds.length < game.numberOfTeams || drawLoading}
                 onClick={handleRunDraw}
               >
@@ -142,7 +163,7 @@ export function PeladaDetailPage() {
                     Sorteando...
                   </span>
                 ) : (
-                  '🎲 Executar sorteio'
+                  '🎲 Sortear'
                 )}
               </ShimmerButton>
           </PageHeader.Actions>
@@ -159,7 +180,12 @@ export function PeladaDetailPage() {
       <BlurFade delay={0.2}>
         <Card.Root>
           <Card.Header>
-            <Card.Title>Selecionar jogadores</Card.Title>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <Card.Title>Selecionar jogadores</Card.Title>
+              <span className="text-xs font-medium text-[var(--text-tertiary)] sm:text-sm">
+                {playerIds.length} de {allPlayers.length} selecionado(s)
+              </span>
+            </div>
           </Card.Header>
           <Card.Content>
             <PeladaPlayerSelect
@@ -175,11 +201,47 @@ export function PeladaDetailPage() {
       {teams.length > 0 && (
         <section>
           <BlurFade delay={0.3}>
-            <h2 className="mb-4 text-lg font-bold text-[var(--text-primary)]">
-              Times e estatísticas
-            </h2>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">
+                Times e estatísticas
+              </h2>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const text = formatTeamsForShare(teams, playersMap)
+                      navigator.clipboard.writeText(text).then(() => {
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      })
+                    }}
+                  >
+                    {copied ? '✅ Copiado!' : '📋 Copiar'}
+                  </Button>
+                  {copied && (
+                    <span className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[var(--surface-inverse)] px-3 py-1.5 text-xs font-medium text-[var(--text-inverse)] shadow-lg animate-in fade-in slide-in-from-bottom-1 duration-200">
+                      Times copiados!
+                    </span>
+                  )}
+                </div>
+                {typeof navigator.share === 'function' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const text = formatTeamsForShare(teams, playersMap)
+                      navigator.share({ text }).catch(() => {})
+                    }}
+                  >
+                    📤 Compartilhar
+                  </Button>
+                )}
+              </div>
+            </div>
           </BlurFade>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((team, i) => (
               <BlurFade key={team.teamName} delay={0.35 + i * 0.08}>
                 <TeamStatsCard team={team} playersMap={playersMap} />
@@ -245,7 +307,7 @@ function PeladaPlayerSelect({
           </button>
         </div>
       )}
-      <ul className="flex max-h-[320px] flex-col gap-0.5 overflow-y-auto rounded-lg border border-[var(--border-primary)] p-1.5">
+      <ul className="flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto rounded-lg border border-[var(--border-primary)] p-1 sm:max-h-[320px] sm:p-1.5">
         {allPlayers.map((p) => {
           const isSelected = selectedIds.includes(p.id)
           return (
