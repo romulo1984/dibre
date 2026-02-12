@@ -98,7 +98,7 @@ export function HomePage() {
                 Como funciona
               </h2>
               <p className="mt-3 text-[var(--text-secondary)]">
-                Três passos simples para a pelada perfeita
+                Três passos simples para a pelada perfeita e equilibrada
               </p>
             </div>
           </BlurFade>
