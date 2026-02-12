@@ -35,7 +35,7 @@ export function HomePage() {
               </span>{' '}
               para sua{' '}
               <WordRotate
-                words={['pelada', 'rachinha', 'partida']}
+                words={['pelada', 'rachinha', 'partida', 'batalha', 'baba']}
                 className="bg-gradient-to-r from-[var(--color-accent-400)] to-[var(--color-accent-500)] bg-clip-text text-transparent"
               />
             </h1>
@@ -43,8 +43,8 @@ export function HomePage() {
 
           <BlurFade delay={0.4}>
             <p className="mx-auto max-w-lg text-lg text-[var(--text-secondary)]">
-              Cadastre jogadores, avalie habilidades e gere times justos
-              automaticamente com o algoritmo de balanceamento do{' '}
+              Cadastre jogadores, avalie habilidades e gere times justos automaticamente com o
+              algoritmo de balanceamento do{' '}
               <strong className="text-[var(--text-brand)]">dib.re</strong>.
             </p>
           </BlurFade>
