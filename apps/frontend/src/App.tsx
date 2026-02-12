@@ -14,25 +14,36 @@ import { PlayersImportExportPage } from '@/pages/PlayersImportExportPage'
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() || ''
 
+/**
+ * Árvore de rotas da aplicação.
+ * Extraída para ser reutilizada tanto pelo client (BrowserRouter)
+ * quanto pelo server (StaticRouter) durante o pre-rendering.
+ */
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="players" element={<PlayersPage />} />
+          <Route path="players/new" element={<PlayerNewPage />} />
+          <Route path="players/import-export" element={<PlayersImportExportPage />} />
+          <Route path="players/:id" element={<PlayerDetailPage />} />
+          <Route path="players/:id/edit" element={<PlayerEditPage />} />
+          <Route path="peladas" element={<PeladasPage />} />
+          <Route path="peladas/new" element={<PeladaNewPage />} />
+          <Route path="peladas/:id" element={<PeladaDetailPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  )
+}
+
 function AppContent() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route element={<RequireAuth />}>
-            <Route path="players" element={<PlayersPage />} />
-            <Route path="players/new" element={<PlayerNewPage />} />
-            <Route path="players/import-export" element={<PlayersImportExportPage />} />
-            <Route path="players/:id" element={<PlayerDetailPage />} />
-            <Route path="players/:id/edit" element={<PlayerEditPage />} />
-            <Route path="peladas" element={<PeladasPage />} />
-            <Route path="peladas/new" element={<PeladaNewPage />} />
-            <Route path="peladas/:id" element={<PeladaDetailPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   )
 }
