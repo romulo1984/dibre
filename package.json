@@ -1,25 +1,29 @@
 {
   "name": "dibre",
-  "version": "0.1.0",
   "private": true,
+  "description": "Sistema de avaliação de atletas e sorteio equilibrado de times para pelada",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "preinstall": "sh scripts/fix-lockfile-registry.sh",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -ws",
+    "build:backend": "npm run build -w backend",
+    "build:frontend": "npm run build -w frontend",
+    "lint": "npm run lint -ws",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "db:generate": "npm run db:generate -w backend",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:push": "npm run db:push -w backend",
+    "db:studio": "npm run db:studio -w backend"
   },
-  "dependencies": {
-    "next": "12.1.4",
-    "react": "18.0.0",
-    "react-dom": "18.0.0"
+  "engines": {
+    "node": ">=22.0.0"
   },
   "devDependencies": {
-    "@types/node": "17.0.23",
-    "@types/react": "18.0.1",
-    "@types/react-dom": "18.0.0",
-    "eslint": "8.13.0",
-    "eslint-config-next": "12.1.4",
-    "sass": "^1.50.0",
-    "typescript": "4.6.3"
+    "prettier": "^3.4.0"
   }
 }

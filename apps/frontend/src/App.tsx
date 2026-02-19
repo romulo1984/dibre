@@ -1,0 +1,96 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ClerkProvider } from '@clerk/clerk-react'
+import { Layout } from '@/components/layout/Layout'
+import { RequireAuth } from '@/components/auth/RequireAuth'
+import { HomePage } from '@/pages/HomePage'
+import { PlayersPage } from '@/pages/PlayersPage'
+import { PlayerDetailPage } from '@/pages/PlayerDetailPage'
+import { PlayerNewPage } from '@/pages/PlayerNewPage'
+import { PlayerEditPage } from '@/pages/PlayerEditPage'
+import { GamesPage } from '@/pages/GamesPage'
+import { GameDetailPage } from '@/pages/GameDetailPage'
+import { GameNewPage } from '@/pages/GameNewPage'
+import { PlayersImportExportPage } from '@/pages/PlayersImportExportPage'
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() || ''
+
+/**
+ * Árvore de rotas da aplicação.
+ * Extraída para ser reutilizada tanto pelo client (BrowserRouter)
+ * quanto pelo server (StaticRouter) durante o pre-rendering.
+ */
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="players" element={<PlayersPage />} />
+          <Route path="players/new" element={<PlayerNewPage />} />
+          <Route path="players/import-export" element={<PlayersImportExportPage />} />
+          <Route path="players/:id" element={<PlayerDetailPage />} />
+          <Route path="players/:id/edit" element={<PlayerEditPage />} />
+          <Route path="games" element={<GamesPage />} />
+          <Route path="games/new" element={<GameNewPage />} />
+          <Route path="games/:id" element={<GameDetailPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  )
+}
+
+function AppContent() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  )
+}
+
+function ClerkMissingMessage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[var(--surface-secondary)] p-6">
+      <div className="mx-auto max-w-md rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-8 text-center shadow-lg">
+        <span className="mb-4 inline-block text-4xl">🔑</span>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">
+          Chave do Clerk não configurada
+        </h1>
+        <p className="mt-3 text-sm text-[var(--text-secondary)]">
+          Crie o arquivo{' '}
+          <code className="rounded-md bg-[var(--surface-tertiary)] px-1.5 py-0.5 text-xs font-medium">
+            apps/frontend/.env
+          </code>{' '}
+          e defina{' '}
+          <code className="rounded-md bg-[var(--surface-tertiary)] px-1.5 py-0.5 text-xs font-medium">
+            VITE_CLERK_PUBLISHABLE_KEY
+          </code>{' '}
+          com a chave pública do seu app em{' '}
+          <a
+            href="https://dashboard.clerk.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--color-brand-600)] underline hover:no-underline"
+          >
+            dashboard.clerk.com
+          </a>
+          .
+        </p>
+        <p className="mt-4 text-xs text-[var(--text-tertiary)]">
+          Reinicie o servidor após salvar o .env (npm run dev:frontend).
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  if (!clerkPubKey) {
+    return <ClerkMissingMessage />
+  }
+  return (
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <AppContent />
+    </ClerkProvider>
+  )
+}

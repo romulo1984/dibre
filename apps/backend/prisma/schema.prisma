@@ -1,0 +1,92 @@
+// dib.re - Database schema
+// MySQL for local (Docker) and production (Coolify env)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin   // backoffice futuro
+  member  // usuário logado normal (cria peladas/jogadores, faz sorteios)
+  viewer  // legado / somente leitura
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String?
+  name      String?
+  role      Role     @default(member)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  games     Game[]
+  players   Player[]
+}
+
+model Player {
+  id          String    @id @default(cuid())
+  name        String
+  avatarUrl   String?   @db.MediumText // URL ou data URL (base64) da foto/avatar
+  stars       Int       // 1-5 overall level
+  pass        Int       // 1-5
+  shot        Int       // 1-5
+  defense     Int       // 1-5
+  energy      Int       // 1-5
+  speed       Int       // 1-5
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // soft delete
+  participations GamePlayer[]
+  @@index([createdById])
+}
+
+model Game {
+  id            String    @id @default(cuid())
+  name          String
+  numberOfTeams Int       // 2, 3, etc.
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? // soft delete
+  createdById   String?
+  createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  players       GamePlayer[]
+  teams         Team[]
+  @@index([createdById])
+}
+
+model GamePlayer {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([gameId, playerId])
+  @@index([gameId])
+  @@index([playerId])
+}
+
+model Team {
+  id            String   @id @default(cuid())
+  gameId        String
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name          String   // e.g. "Time A", "Time B"
+  order         Int      // 1, 2, 3...
+  playerIds     Json     // JSON array of player IDs for this team
+  avgStars      Float?
+  avgPass       Float?
+  avgShot       Float?
+  avgDefense    Float?
+  avgEnergy     Float?
+  avgSpeed      Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([gameId])
+}
