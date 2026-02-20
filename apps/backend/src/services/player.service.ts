@@ -2,6 +2,7 @@ import type { PlayerEntity } from '../domain/player.js'
 import { STAR_MIN, STAR_MAX, validateAttributes } from '../domain/player.js'
 import * as gameRepo from '../repositories/game.repository.js'
 import * as playerRepo from '../repositories/player.repository.js'
+import * as groupRepo from '../repositories/group.repository.js'
 
 export interface PlayerProfileGame {
   id: string
@@ -36,17 +37,30 @@ export async function getPlayerWithParticipationCount(
 /** Perfil completo: jogador, contagem de participações, peladas e top 5 parceiros (mesmo time). */
 export async function getPlayerProfile(
   id: string,
-  ownerId: string
+  viewerId: string
 ): Promise<{
   player: PlayerEntity
   participationCount: number
   games: PlayerProfileGame[]
   teammates: PlayerProfileTeammate[]
+  createdByName: string | null
+  isOwner: boolean
 } | null> {
-  const base = await getPlayerWithParticipationCount(id, ownerId)
-  if (!base) return null
+  // Try owner access first; fall back to group member access
+  let player = await playerRepo.findPlayerByIdForOwner(id, viewerId)
+  const isOwner = !!player
+  if (!player) {
+    const raw = await playerRepo.findPlayerById(id)
+    if (!raw || raw.deletedAt) return null
+    if (!raw.createdById) return null
+    const canView = await groupRepo.isGroupMemberOfOwner(viewerId, raw.createdById)
+    if (!canView) return null
+    player = raw
+  }
 
-  const games = await playerRepo.findParticipatedGames(id, ownerId)
+  const participationCount = await playerRepo.countParticipations(id)
+  const playerOwnerId = player.createdById ?? viewerId
+  const games = await playerRepo.findParticipatedGames(id, playerOwnerId)
 
   const countByPlayerId = new Map<string, number>()
   for (const g of games) {
@@ -72,11 +86,19 @@ export async function getPlayerProfile(
     })
     .filter((t): t is PlayerProfileTeammate => t != null)
 
+  let createdByName: string | null = null
+  if (!isOwner && player.createdById) {
+    const creator = await groupRepo.findUserById(player.createdById)
+    createdByName = creator?.name ?? creator?.email ?? null
+  }
+
   return {
-    player: base.player,
-    participationCount: base.participationCount,
+    player,
+    participationCount,
     games,
     teammates,
+    createdByName,
+    isOwner,
   }
 }
 

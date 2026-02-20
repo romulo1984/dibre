@@ -11,6 +11,10 @@ import { GamesPage } from '@/pages/GamesPage'
 import { GameDetailPage } from '@/pages/GameDetailPage'
 import { GameNewPage } from '@/pages/GameNewPage'
 import { PlayersImportExportPage } from '@/pages/PlayersImportExportPage'
+import { GroupsPage } from '@/pages/GroupsPage'
+import { GroupNewPage } from '@/pages/GroupNewPage'
+import { GroupDetailPage } from '@/pages/GroupDetailPage'
+import { GroupManagePage } from '@/pages/GroupManagePage'
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() || ''
 
@@ -33,6 +37,10 @@ export function AppRoutes() {
           <Route path="games" element={<GamesPage />} />
           <Route path="games/new" element={<GameNewPage />} />
           <Route path="games/:id" element={<GameDetailPage />} />
+          <Route path="groups" element={<GroupsPage />} />
+          <Route path="groups/new" element={<GroupNewPage />} />
+          <Route path="groups/:id" element={<GroupDetailPage />} />
+          <Route path="groups/:id/manage" element={<GroupManagePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

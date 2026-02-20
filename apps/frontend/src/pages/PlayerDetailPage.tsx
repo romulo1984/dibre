@@ -46,6 +46,8 @@ export function PlayerDetailPage() {
     }
   }, [id, getToken])
 
+  const isOwner = data?.isOwner ?? false
+
   const handleDelete = async () => {
     if (!id) return
     setDeleting(true)
@@ -96,21 +98,34 @@ export function PlayerDetailPage() {
           <div>
             <PageHeader.Title>{data.player.name}</PageHeader.Title>
             <PageHeader.Description>
-              Perfil, estatísticas e histórico de peladas
+              {isOwner ? 'Perfil, estatísticas e histórico de peladas' : 'Perfil e estatísticas'}
             </PageHeader.Description>
+            {!isOwner && data.createdByName && (
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-[var(--text-tertiary)]">
+                <span>👤</span>
+                <span>
+                  Jogador de{' '}
+                  <span className="font-medium text-[var(--text-secondary)]">
+                    {data.createdByName}
+                  </span>
+                </span>
+              </p>
+            )}
           </div>
-          <PageHeader.Actions>
-            <Link to={`/players/${id}/edit`}>
-              <Button variant="outline">Editar</Button>
-            </Link>
-            <Button
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              Excluir
-            </Button>
-          </PageHeader.Actions>
+          {isOwner && (
+            <PageHeader.Actions>
+              <Link to={`/players/${id}/edit`}>
+                <Button variant="outline">Editar</Button>
+              </Link>
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                Excluir
+              </Button>
+            </PageHeader.Actions>
+          )}
         </PageHeader.Root>
       </BlurFade>
 
@@ -127,19 +142,21 @@ export function PlayerDetailPage() {
         </Card.Root>
       </BlurFade>
 
-      {/* Grid: Peladas + Top 5 parceiros */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card.Root>
-          <Card.Content className="p-6">
-            <PlayerParticipatedGames games={data.games} />
-          </Card.Content>
-        </Card.Root>
-        <Card.Root>
-          <Card.Content className="p-6">
-            <PlayerTopTeammates teammates={data.teammates} />
-          </Card.Content>
-        </Card.Root>
-      </div>
+      {/* Grid: Peladas + Top 5 parceiros — only for owner */}
+      {isOwner && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card.Root>
+            <Card.Content className="p-6">
+              <PlayerParticipatedGames games={data.games} />
+            </Card.Content>
+          </Card.Root>
+          <Card.Root>
+            <Card.Content className="p-6">
+              <PlayerTopTeammates teammates={data.teammates} />
+            </Card.Content>
+          </Card.Root>
+        </div>
+      )}
 
       {/* Modal do Card de Exportação */}
       <PlayerExportCard

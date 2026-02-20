@@ -22,6 +22,7 @@ export interface Player {
   defense: number
   energy: number
   speed: number
+  createdById?: string | null
   createdAt: string
   updatedAt: string
   deletedAt?: string | null
@@ -50,6 +51,8 @@ export interface PlayerTeammate {
 export interface PlayerProfileResponse {
   player: Player
   participationCount: number
+  isOwner?: boolean
+  createdByName?: string | null
   games: PlayerParticipationGame[]
   teammates: PlayerTeammate[]
 }
@@ -59,6 +62,9 @@ export interface Game {
   name: string
   numberOfTeams: number
   createdById: string | null
+  createdByName?: string | null
+  isOwner?: boolean
+  groupId?: string | null
   createdAt: string
   updatedAt: string
   deletedAt?: string | null
@@ -86,4 +92,122 @@ export const ATTRIBUTE_LABELS: Record<keyof PlayerAttributes, string> = {
   defense: 'Defesa',
   energy: 'Energia',
   speed: 'Velocidade',
+}
+
+// ── Groups ────────────────────────────────────────────────────────────────────
+
+export type GroupRequestStatus = 'pending' | 'accepted' | 'declined'
+export type NotificationType = 'GROUP_JOIN_REQUEST' | 'GROUP_INVITATION'
+
+export interface Group {
+  id: string
+  name: string
+  description: string | null
+  slug: string
+  ownerId: string
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
+}
+
+export interface GroupMembership {
+  isOwner: boolean
+  isMember: boolean
+  pendingRequest: boolean
+  pendingInvitation: boolean
+}
+
+export interface GroupDetailResponse {
+  group: Group
+  membership: GroupMembership
+}
+
+export interface GroupMember {
+  id: string
+  groupId: string
+  userId: string
+  joinedAt: string
+  user?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
+export interface GroupJoinRequest {
+  id: string
+  groupId: string
+  userId: string
+  status: GroupRequestStatus
+  createdAt: string
+  updatedAt: string
+  user?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
+export interface GroupInvitation {
+  id: string
+  groupId: string
+  invitedUserId: string
+  invitedByUserId: string
+  status: GroupRequestStatus
+  createdAt: string
+  updatedAt: string
+  group?: {
+    id: string
+    name: string
+    slug: string
+  }
+  invitedBy?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+  invitedUser?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
+export interface GroupMembersWithPendingResponse {
+  members: GroupMember[]
+  pendingInvitations: GroupInvitation[]
+}
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  toUserId: string
+  fromUserId: string
+  groupId: string | null
+  relatedId: string | null
+  message: string
+  read: boolean
+  createdAt: string
+  updatedAt: string
+  fromUser?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+  group?: {
+    id: string
+    name: string
+    slug: string
+  } | null
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[]
+  unreadCount: number
+}
+
+export interface UserSummary {
+  id: string
+  name: string | null
+  email: string | null
 }

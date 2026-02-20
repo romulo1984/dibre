@@ -1,17 +1,25 @@
+import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { Logo } from '@/components/ui/Logo'
+import { NotificationCenter } from '@/features/notifications/NotificationCenter'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
   { to: '/players', label: 'Jogadores' },
   { to: '/games', label: 'Peladas' },
+  { to: '/groups', label: 'Grupos' },
 ]
 
 export function Layout() {
   const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
   useScrollToTop()
+
+  function closeMenu() {
+    setMenuOpen(false)
+  }
 
   return (
     <div className="min-h-screen bg-[var(--surface-secondary)]">
@@ -23,6 +31,7 @@ export function Layout() {
             to="/"
             className="group flex items-center transition-opacity hover:opacity-90"
             aria-label="dib.re - Início"
+            onClick={closeMenu}
           >
             <Logo
               height={26}
@@ -38,32 +47,36 @@ export function Layout() {
             />
           </Link>
 
-          {/* Nav links */}
-          <div className="flex items-center gap-0.5 sm:gap-1">
-            {navLinks.map(({ to, label }) => {
-              const active = location.pathname.startsWith(to)
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={cn(
-                    'relative rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-200 sm:px-3 sm:py-2 sm:text-sm',
-                    active
-                      ? 'text-[var(--color-brand-600)]'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
-                  )}
-                >
-                  {label}
-                  {active && (
-                    <span className="absolute inset-x-1 -bottom-[calc(0.5rem+1px)] h-0.5 rounded-full bg-[var(--color-brand-500)]" />
-                  )}
-                </Link>
-              )
-            })}
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            {/* Desktop nav links */}
+            <div className="hidden items-center gap-0.5 sm:flex sm:gap-1">
+              {navLinks.map(({ to, label }) => {
+                const active = location.pathname.startsWith(to)
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={cn(
+                      'relative rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                      active
+                        ? 'text-[var(--color-brand-600)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
+                    )}
+                  >
+                    {label}
+                    {active && (
+                      <span className="absolute inset-x-1 -bottom-[calc(0.5rem+1px)] h-0.5 rounded-full bg-[var(--color-brand-500)]" />
+                    )}
+                  </Link>
+                )
+              })}
 
-            <div className="ml-2 h-6 w-px bg-[var(--border-primary)] sm:ml-3" />
+              <div className="ml-3 h-6 w-px bg-[var(--border-primary)]" />
+            </div>
 
-            <div className="ml-2 sm:ml-3">
+            {/* Auth / notifications */}
+            <div className="flex items-center gap-2">
               <SignedOut>
                 <SignInButton mode="modal">
                   <button
@@ -75,6 +88,7 @@ export function Layout() {
                 </SignInButton>
               </SignedOut>
               <SignedIn>
+                <NotificationCenter />
                 <UserButton
                   afterSignOutUrl="/"
                   appearance={{
@@ -85,8 +99,54 @@ export function Layout() {
                 />
               </SignedIn>
             </div>
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className="flex items-center justify-center rounded-lg p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)] sm:hidden"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="4" y1="4" x2="16" y2="16" />
+                  <line x1="16" y1="4" x2="4" y2="16" />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="5" x2="17" y2="5" />
+                  <line x1="3" y1="10" x2="17" y2="10" />
+                  <line x1="3" y1="15" x2="17" y2="15" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div className="border-t border-[var(--border-primary)] bg-[var(--surface-primary)] py-2 sm:hidden">
+            {navLinks.map(({ to, label }) => {
+              const active = location.pathname.startsWith(to)
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={closeMenu}
+                  className={cn(
+                    'flex items-center px-4 py-3 text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-[var(--color-brand-50)] text-[var(--color-brand-600)]'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
+        )}
       </nav>
 
       {/* ── Main ── */}

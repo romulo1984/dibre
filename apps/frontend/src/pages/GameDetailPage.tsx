@@ -14,6 +14,7 @@ import {
   getGame,
   getGamePlayers,
   getGameTeams,
+  getGameTeamPlayers,
   setGamePlayers,
   runDraw,
   deleteGame,
@@ -49,6 +50,7 @@ export function GameDetailPage() {
   const [playerIds, setPlayerIds] = useState<string[]>([])
   const [teams, setTeams] = useState<TeamAssignment[]>([])
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
+  const [playersMap, setPlayersMap] = useState<Map<string, Player>>(new Map())
   const [loading, setLoading] = useState(true)
   const [drawLoading, setDrawLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -60,22 +62,24 @@ export function GameDetailPage() {
     if (!id) return
     let cancelled = false
     getToken()
-      .then((token) => {
+      .then(async (token) => {
         if (cancelled || !token) return
-        return Promise.all([
+        const [g, playersRes, teamsRes, teamPlayers] = await Promise.all([
           getGame(id, token),
           getGamePlayers(id, token),
           getGameTeams(id, token),
-          listPlayers(token),
+          getGameTeamPlayers(id, token),
         ])
-      })
-      .then((result) => {
-        if (!cancelled && result) {
-          const [g, playersRes, teamsRes, players] = result
-          setGame(g)
-          setPlayerIds(playersRes.playerIds)
-          setTeams(teamsRes.teams)
-          setAllPlayers(players)
+        if (cancelled) return
+        setGame(g)
+        setPlayerIds(playersRes.playerIds)
+        setTeams(teamsRes.teams)
+        setPlayersMap(new Map(teamPlayers.map((p) => [p.id, p])))
+
+        // Load full player list only for owner (needed for the selector)
+        if (g.isOwner) {
+          const players = await listPlayers(token)
+          if (!cancelled) setAllPlayers(players)
         }
       })
       .catch((err) => {
@@ -89,7 +93,7 @@ export function GameDetailPage() {
     }
   }, [id, getToken])
 
-  const playersMap = new Map(allPlayers.map((p) => [p.id, p]))
+  const isOwner = game?.isOwner ?? false
   const activePlayers = allPlayers.filter((p) => !p.deletedAt)
 
   const handleDeleteGame = async () => {
@@ -128,6 +132,9 @@ export function GameDetailPage() {
     try {
       const res = await runDraw(id, token)
       setTeams(res.teams)
+      // Refresh players map after draw
+      const teamPlayers = await getGameTeamPlayers(id, token)
+      setPlayersMap(new Map(teamPlayers.map((p) => [p.id, p])))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro no sorteio')
     } finally {
@@ -171,8 +178,20 @@ export function GameDetailPage() {
             <PageHeader.Description>
               {game.numberOfTeams} time(s) · {playerIds.length} jogador(es) selecionado(s)
             </PageHeader.Description>
+            {!isOwner && game.createdByName && (
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-[var(--text-tertiary)]">
+                <span>👤</span>
+                <span>
+                  Criado por{' '}
+                  <span className="font-medium text-[var(--text-secondary)]">
+                    {game.createdByName}
+                  </span>
+                </span>
+              </p>
+            )}
           </div>
-          <PageHeader.Actions>
+          {isOwner && (
+            <PageHeader.Actions>
               <ShimmerButton
                 className="h-9 px-3 text-xs font-semibold shadow-lg disabled:opacity-50 sm:h-10 sm:px-5 sm:text-sm"
                 disabled={playerIds.length < game.numberOfTeams || drawLoading}
@@ -194,7 +213,8 @@ export function GameDetailPage() {
               >
                 Excluir
               </Button>
-          </PageHeader.Actions>
+            </PageHeader.Actions>
+          )}
         </PageHeader.Root>
       </BlurFade>
 
@@ -204,26 +224,28 @@ export function GameDetailPage() {
         </div>
       )}
 
-      {/* Seleção de jogadores */}
-      <BlurFade delay={0.2}>
-        <Card.Root>
-          <Card.Header>
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <Card.Title>Selecionar jogadores</Card.Title>
-              <span className="text-xs font-medium text-[var(--text-tertiary)] sm:text-sm">
-                {playerIds.length} de {activePlayers.length} selecionado(s)
-              </span>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <GamePlayerSelect
-              allPlayers={activePlayers}
-              selectedIds={playerIds}
-              onChange={handleSetPlayers}
-            />
-          </Card.Content>
-        </Card.Root>
-      </BlurFade>
+      {/* Seleção de jogadores — only for owner */}
+      {isOwner && (
+        <BlurFade delay={0.2}>
+          <Card.Root>
+            <Card.Header>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <Card.Title>Selecionar jogadores</Card.Title>
+                <span className="text-xs font-medium text-[var(--text-tertiary)] sm:text-sm">
+                  {playerIds.length} de {activePlayers.length} selecionado(s)
+                </span>
+              </div>
+            </Card.Header>
+            <Card.Content>
+              <GamePlayerSelect
+                allPlayers={activePlayers}
+                selectedIds={playerIds}
+                onChange={handleSetPlayers}
+              />
+            </Card.Content>
+          </Card.Root>
+        </BlurFade>
+      )}
 
       {/* Teams & Stats */}
       {teams.length > 0 && (
@@ -277,6 +299,17 @@ export function GameDetailPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {teams.length === 0 && !isOwner && (
+        <BlurFade delay={0.2}>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-12 text-center">
+            <span className="mb-3 text-4xl">🎲</span>
+            <p className="text-sm text-[var(--text-tertiary)]">
+              O sorteio ainda não foi realizado.
+            </p>
+          </div>
+        </BlurFade>
       )}
 
       <ConfirmDialog

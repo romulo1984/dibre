@@ -59,6 +59,8 @@ export async function getById(req: Request, res: Response): Promise<void> {
     res.json({
       player: result.player,
       participationCount: result.participationCount,
+      isOwner: result.isOwner,
+      createdByName: result.createdByName,
       games: result.games.map((g) => ({
         id: g.id,
         name: g.name,

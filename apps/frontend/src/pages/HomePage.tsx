@@ -156,6 +156,72 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* ── Groups Section ── */}
+      <section className="border-y border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-20">
+        <div className="mx-auto max-w-5xl">
+          <BlurFade delay={0.1}>
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
+              <div className="flex-1 space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-50)] px-3 py-1 text-sm font-medium text-[var(--color-brand-600)]">
+                  <span>👥</span> Novidade
+                </div>
+                <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+                  Compartilhe com seu grupo
+                </h2>
+                <p className="text-[var(--text-secondary)] leading-relaxed">
+                  Crie um grupo, convide seus amigos por e-mail e deixe todos acompanharem
+                  as peladas e jogadores. Membros visualizam tudo, mas só o dono gerencia.
+                </p>
+                <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
+                  {[
+                    'Convide por e-mail — sem precisar compartilhar link',
+                    'Escolha quais peladas ficam visíveis no grupo',
+                    'Membros veem jogadores e resultados dos sorteios',
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="mt-0.5 text-[var(--color-brand-500)]">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <Link to="/groups">
+                    <ShimmerButton className="h-10 px-5 text-sm font-semibold">
+                      Ver grupos
+                    </ShimmerButton>
+                  </Link>
+                  <Link
+                    to="/groups/new"
+                    className="inline-flex h-10 items-center rounded-xl border border-[var(--border-secondary)] bg-[var(--surface-secondary)] px-5 text-sm font-semibold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-tertiary)]"
+                  >
+                    Criar grupo
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:w-[380px] lg:shrink-0 lg:grid-cols-1">
+                {[
+                  { icon: '🔒', title: 'Privado por padrão', desc: 'Conteúdo visível apenas para membros aprovados.' },
+                  { icon: '📩', title: 'Convite por e-mail', desc: 'Convide diretamente pelo e-mail cadastrado.' },
+                  { icon: '📋', title: 'Peladas selecionadas', desc: 'Escolha quais peladas aparecem no grupo.' },
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    className="flex items-start gap-3 rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4"
+                  >
+                    <span className="text-xl">{item.icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{item.title}</p>
+                      <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </BlurFade>
+        </div>
+      </section>
+
       {/* ── CTA Section ── */}
       <section className="border-t border-[var(--border-primary)] bg-gradient-to-b from-[var(--surface-primary)] to-[var(--surface-secondary)] px-4 py-20 text-center">
         <BlurFade delay={0.1}>
