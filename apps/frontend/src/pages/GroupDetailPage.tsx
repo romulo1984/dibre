@@ -324,6 +324,13 @@ export function GroupDetailPage() {
             {tab === 'players' && players.length > 0 && (
               <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
             )}
+            {tab === 'games' && membership?.isOwner && (
+              <Link to={`/games/new?groupId=${id}`}>
+                <Button variant="primary" size="sm">
+                  Nova pelada
+                </Button>
+              </Link>
+            )}
           </div>
 
           {contentLoading ? (

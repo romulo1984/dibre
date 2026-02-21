@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '../database/client.js'
 import type { GameEntity } from '../domain/game.js'
 import type { TeamAssignment, TeamRecord } from '../domain/game.js'
@@ -6,6 +7,7 @@ function toGameEntity(row: {
   id: string
   name: string
   numberOfTeams: number
+  teamColors?: unknown
   createdById: string | null
   groupId?: string | null
   createdAt: Date
@@ -16,6 +18,7 @@ function toGameEntity(row: {
     id: row.id,
     name: row.name,
     numberOfTeams: row.numberOfTeams,
+    teamColors: (row.teamColors as Record<string, string>) ?? null,
     createdById: row.createdById,
     groupId: row.groupId ?? null,
     createdAt: row.createdAt,
@@ -51,8 +54,41 @@ export async function createGame(data: {
   name: string
   numberOfTeams: number
   createdById: string
+  groupId?: string | null
+  teamColors?: Record<string, string> | null
 }): Promise<GameEntity> {
-  const row = await prisma.game.create({ data })
+  const row = await prisma.game.create({
+    data: {
+      name: data.name,
+      numberOfTeams: data.numberOfTeams,
+      createdById: data.createdById,
+      groupId: data.groupId ?? undefined,
+      teamColors: data.teamColors ?? Prisma.DbNull,
+    },
+  })
+  return toGameEntity(row)
+}
+
+export async function updateGame(
+  id: string,
+  ownerId: string,
+  data: {
+    groupId?: string | null
+    teamColors?: Record<string, string> | null
+  }
+): Promise<GameEntity | null> {
+  const existing = await prisma.game.findFirst({
+    where: { id, createdById: ownerId, deletedAt: null },
+  })
+  if (!existing) return null
+
+  const updateData: Record<string, unknown> = {}
+  if (data.groupId !== undefined) updateData.groupId = data.groupId
+  if (data.teamColors !== undefined) {
+    updateData.teamColors = data.teamColors ?? Prisma.DbNull
+  }
+
+  const row = await prisma.game.update({ where: { id }, data: updateData })
   return toGameEntity(row)
 }
 

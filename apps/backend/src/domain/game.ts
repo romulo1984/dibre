@@ -4,6 +4,7 @@ export interface GameEntity {
   id: string
   name: string
   numberOfTeams: number
+  teamColors: Record<string, string> | null
   createdById: string | null
   groupId: string | null
   createdAt: Date

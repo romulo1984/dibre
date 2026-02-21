@@ -71,6 +71,7 @@ model Game {
   id            String    @id @default(cuid())
   name          String
   numberOfTeams Int       // 2, 3, etc.
+  teamColors    Json?     // JSON object mapping team order (1-indexed) to color key, e.g. {"1":"red","2":"blue"}
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime? // soft delete

@@ -24,10 +24,26 @@ export async function getGameTeams(
 }
 
 export async function createGame(
-  data: { name: string; numberOfTeams: number },
-  token: string
+  data: {
+    name: string
+    numberOfTeams: number
+    groupId?: string | null
+    teamColors?: Record<string, string> | null
+  },
+  token: string,
 ): Promise<Game> {
   return api.post<Game>('/games', data, token)
+}
+
+export async function updateGame(
+  id: string,
+  data: {
+    groupId?: string | null
+    teamColors?: Record<string, string> | null
+  },
+  token: string,
+): Promise<Game> {
+  return api.patch<Game>(`/games/${id}`, data, token)
 }
 
 export async function setGamePlayers(
