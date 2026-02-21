@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { TeamStatsCard } from '@/features/games/TeamStatsCard'
+import { TeamColorPicker } from '@/features/games/TeamColorPicker'
 import { PlayerRow } from '@/features/players/PlayerRow'
 import { ShimmerButton } from '@/components/magicui/shimmer-button'
 import { BlurFade } from '@/components/magicui/blur-fade'
@@ -18,15 +19,25 @@ import {
   setGamePlayers,
   runDraw,
   deleteGame,
+  updateGame,
 } from '@/services/games.service'
 import { listPlayers } from '@/services/players.service'
-import type { Game, TeamAssignment, Player } from '@/domain/types'
+import { listGroups } from '@/services/groups.service'
+import { getVestColor } from '@/domain/vestColors'
+import type { Game, TeamAssignment, Player, Group } from '@/domain/types'
 
-function formatTeamsForShare(teams: TeamAssignment[], playersMap: Map<string, Player>): string {
+function formatTeamsForShare(
+  teams: TeamAssignment[],
+  playersMap: Map<string, Player>,
+  teamColorsMap?: Record<string, string> | null,
+): string {
   const starsEmoji = (n: number) => '⭐'.repeat(n)
   const lines: string[] = ['⚽ *Sorteio de Times* ⚽', '']
   teams.forEach((team) => {
-    lines.push(`🏆 *${team.teamName}* (${team.playerIds.length} jogadores)`)
+    const colorKey = teamColorsMap?.[String(team.order)]
+    const vestColor = colorKey ? getVestColor(colorKey) : null
+    const colorLabel = vestColor ? ` 🎽 ${vestColor.label}` : ''
+    lines.push(`🏆 *${team.teamName}*${colorLabel} (${team.playerIds.length} jogadores)`)
     lines.push('―'.repeat(20))
     team.playerIds.forEach((id) => {
       const p = playersMap.get(id)
@@ -57,6 +68,10 @@ export function GameDetailPage() {
   const [copied, setCopied] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [ownedGroups, setOwnedGroups] = useState<Group[]>([])
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [teamColors, setTeamColors] = useState<Record<string, string>>({})
+  const [settingsSaving, setSettingsSaving] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -75,11 +90,19 @@ export function GameDetailPage() {
         setPlayerIds(playersRes.playerIds)
         setTeams(teamsRes.teams)
         setPlayersMap(new Map(teamPlayers.map((p) => [p.id, p])))
+        setSelectedGroupId(g.groupId ?? null)
+        setTeamColors(g.teamColors ?? {})
 
-        // Load full player list only for owner (needed for the selector)
         if (g.isOwner) {
-          const players = await listPlayers(token)
-          if (!cancelled) setAllPlayers(players)
+          const [players, groupsData] = await Promise.all([listPlayers(token), listGroups(token)])
+          if (!cancelled) {
+            setAllPlayers(players)
+            setOwnedGroups(
+              groupsData.groups.filter(
+                (gr) => gr.ownerId === groupsData.currentUserId && !gr.deletedAt
+              )
+            )
+          }
         }
       })
       .catch((err) => {
@@ -92,6 +115,26 @@ export function GameDetailPage() {
       cancelled = true
     }
   }, [id, getToken])
+
+  const handleSaveSettings = async () => {
+    if (!id) return
+    setSettingsSaving(true)
+    try {
+      const token = await getToken()
+      if (!token) return
+      const colorsToSend = Object.keys(teamColors).length > 0 ? teamColors : null
+      const updated = await updateGame(
+        id,
+        { groupId: selectedGroupId, teamColors: colorsToSend },
+        token,
+      )
+      setGame((prev) => (prev ? { ...prev, ...updated } : updated))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar')
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
 
   const isOwner = game?.isOwner ?? false
   const activePlayers = allPlayers.filter((p) => !p.deletedAt)
@@ -135,6 +178,9 @@ export function GameDetailPage() {
       // Refresh players map after draw
       const teamPlayers = await getGameTeamPlayers(id, token)
       setPlayersMap(new Map(teamPlayers.map((p) => [p.id, p])))
+      setTimeout(() => {
+        document.getElementById('teams-section')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro no sorteio')
     } finally {
@@ -247,21 +293,61 @@ export function GameDetailPage() {
         </BlurFade>
       )}
 
+      {/* Settings — group & colors (owner only) */}
+      {isOwner && (
+        <BlurFade delay={0.25}>
+          <Card.Root>
+            <Card.Header>
+              <Card.Title>Configurações</Card.Title>
+            </Card.Header>
+            <Card.Content className="space-y-5">
+              {ownedGroups.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Grupo</label>
+                  <select
+                    value={selectedGroupId ?? ''}
+                    onChange={(e) => setSelectedGroupId(e.target.value || null)}
+                    className="w-full rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 py-3 text-sm text-[var(--text-primary)] transition-all focus:border-[var(--color-brand-500)] focus:ring-2 focus:ring-[var(--color-brand-500)]/20 focus:outline-none"
+                  >
+                    <option value="">Sem grupo (pelada avulsa)</option>
+                    {ownedGroups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <TeamColorPicker
+                numberOfTeams={game.numberOfTeams}
+                teamColors={teamColors}
+                onChange={setTeamColors}
+              />
+
+              <div className="flex">
+                <Button size="sm" loading={settingsSaving} onClick={handleSaveSettings}>
+                  Salvar configurações
+                </Button>
+              </div>
+            </Card.Content>
+          </Card.Root>
+        </BlurFade>
+      )}
+
       {/* Teams & Stats */}
       {teams.length > 0 && (
-        <section>
+        <section id="teams-section" className="scroll-mt-6">
           <BlurFade delay={0.3}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-bold text-[var(--text-primary)]">
-                Times e estatísticas
-              </h2>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Times e estatísticas</h2>
               <div className="flex gap-2">
                 <div className="relative">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap)
+                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
                       navigator.clipboard.writeText(text).then(() => {
                         setCopied(true)
                         setTimeout(() => setCopied(false), 2000)
@@ -281,7 +367,7 @@ export function GameDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap)
+                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
                       navigator.share({ text }).catch(() => {})
                     }}
                   >
@@ -294,7 +380,11 @@ export function GameDetailPage() {
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((team, i) => (
               <BlurFade key={team.teamName} delay={0.35 + i * 0.08}>
-                <TeamStatsCard team={team} playersMap={playersMap} />
+                <TeamStatsCard
+                  team={team}
+                  playersMap={playersMap}
+                  vestColorKey={game.teamColors?.[String(team.order)]}
+                />
               </BlurFade>
             ))}
           </div>
@@ -372,7 +462,7 @@ function GamePlayerSelect({
               allSelected
                 ? 'border-[var(--border-primary)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)]'
                 : 'border-[var(--color-brand-500)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] hover:bg-[var(--color-brand-100)]',
-              saving && 'opacity-60',
+              saving && 'opacity-60'
             )}
           >
             {allSelected ? 'Desmarcar todos' : 'Selecionar todos'}
@@ -393,7 +483,7 @@ function GamePlayerSelect({
                   isSelected
                     ? 'bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-100)] dark:bg-[var(--color-brand-900)]'
                     : 'hover:bg-[var(--surface-tertiary)]',
-                  saving && 'opacity-60',
+                  saving && 'opacity-60'
                 )}
               >
                 <PlayerRow player={p}>
@@ -402,7 +492,7 @@ function GamePlayerSelect({
                       'flex size-5 shrink-0 items-center justify-center rounded border text-xs font-medium',
                       isSelected
                         ? 'border-[var(--color-brand-500)] bg-[var(--color-brand-500)] text-white'
-                        : 'border-[var(--border-primary)] bg-[var(--surface-primary)]',
+                        : 'border-[var(--border-primary)] bg-[var(--surface-primary)]'
                     )}
                   >
                     {isSelected ? '✓' : ''}

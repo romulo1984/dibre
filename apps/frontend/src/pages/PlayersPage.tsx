@@ -4,11 +4,11 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { PlayerList } from '@/features/players/PlayerList'
 import type { PlayerListViewMode } from '@/features/players/PlayerList'
+import { ViewModeToggle } from '@/components/ui/ViewModeToggle/ViewModeToggle'
 import { listPlayers } from '@/services/players.service'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import type { Player } from '@/domain/types'
 import { BlurFade } from '@/components/magicui/blur-fade'
-import { cn } from '@/lib/utils'
 
 function starsString(count: number): string {
   return '⭐'.repeat(count)
@@ -89,38 +89,8 @@ export function PlayersPage() {
             </PageHeader.Description>
           </div>
           <PageHeader.Actions>
-            {/* View mode toggle */}
             {activePlayers.length > 0 && (
-              <div className="flex rounded-lg border border-[var(--border-primary)] p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('cards')}
-                  className={cn(
-                    'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
-                    viewMode === 'cards'
-                      ? 'bg-[var(--color-brand-500)] text-white shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
-                  )}
-                  aria-label="Visualizar como cards"
-                  title="Cards"
-                >
-                  ▦
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
-                    viewMode === 'list'
-                      ? 'bg-[var(--color-brand-500)] text-white shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
-                  )}
-                  aria-label="Visualizar como lista"
-                  title="Lista"
-                >
-                  ☰
-                </button>
-              </div>
+              <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
             )}
             <Link to="/players/import-export">
               <Button variant="outline" size="sm">📦 Importar / Exportar</Button>

@@ -77,9 +77,11 @@ Located in `apps/backend/src/services/balance.service.ts`. Three-phase distribut
 
 ### Authentication & Roles
 - **Clerk** handles auth (JWT). Roles stored in Clerk `publicMetadata`.
-- **admin / member**: Can create, edit, draw teams
+- **admin**: Platform super-user. Has all `member` permissions plus access to the admin panel (`/admin/users`) where they can manage all platform users (view, search, delete). Admin role is set manually in Clerk Dashboard → Users → select user → Public metadata → set `{ "role": "admin" }`.
+- **member**: Can create, edit, draw teams, manage groups
 - **viewer**: Read-only, no login required
-- Backend enforces auth via `requireAuth` middleware on mutation routes.
+- Backend enforces auth via `requireAuth` middleware on protected routes, and `requireAdmin` middleware on admin-only routes (`/api/admin/*`).
+- Frontend enforces admin access via `RequireAdmin` route wrapper (checks `user.publicMetadata.role === 'admin'`). The admin nav link only appears for admin users.
 
 ## Code Style
 

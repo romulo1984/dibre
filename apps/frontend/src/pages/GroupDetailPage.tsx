@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { BlurFade } from '@/components/magicui/blur-fade'
 import { Button } from '@/components/ui/Button/Button'
 import { PlayerList } from '@/features/players/PlayerList'
+import type { PlayerListViewMode } from '@/features/players/PlayerList'
+import { ViewModeToggle } from '@/components/ui/ViewModeToggle/ViewModeToggle'
 import { GameList } from '@/features/games/GameList'
 import { useAuthToken } from '@/hooks/useAuthToken'
 import {
@@ -33,6 +35,7 @@ export function GroupDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [actionMsg, setActionMsg] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<PlayerListViewMode>('cards')
 
   const fetchGroup = useCallback(async () => {
     if (!id) return
@@ -54,7 +57,7 @@ export function GroupDetailPage() {
       setPlayers(ps)
       setGames(gs)
     } catch {
-      // silent — user may not have access
+      // silent
     } finally {
       setContentLoading(false)
     }
@@ -80,10 +83,10 @@ export function GroupDetailPage() {
       const token = await getToken()
       if (!token) return
       await requestToJoin(id, token)
-      setActionMsg('Solicitação enviada! Aguarde a aprovação do dono do grupo.')
-      setMembership((m) => m ? { ...m, pendingRequest: true } : m)
+      setActionMsg('Solicitacao enviada! Aguarde a aprovacao do dono do grupo.')
+      setMembership((m) => (m ? { ...m, pendingRequest: true } : m))
     } catch (err) {
-      setActionMsg(err instanceof Error ? err.message : 'Erro ao solicitar participação')
+      setActionMsg(err instanceof Error ? err.message : 'Erro ao solicitar participacao')
     } finally {
       setActionLoading(false)
     }
@@ -97,10 +100,10 @@ export function GroupDetailPage() {
       const token = await getToken()
       if (!token) return
       await cancelJoinRequest(id, token)
-      setActionMsg('Solicitação cancelada.')
-      setMembership((m) => m ? { ...m, pendingRequest: false } : m)
+      setActionMsg('Solicitacao cancelada.')
+      setMembership((m) => (m ? { ...m, pendingRequest: false } : m))
     } catch (err) {
-      setActionMsg(err instanceof Error ? err.message : 'Erro ao cancelar solicitação')
+      setActionMsg(err instanceof Error ? err.message : 'Erro ao cancelar solicitacao')
     } finally {
       setActionLoading(false)
     }
@@ -117,12 +120,12 @@ export function GroupDetailPage() {
       const invitations = await getMyInvitations(token)
       const inv = invitations.find((i) => i.groupId === groupId)
       if (!inv) {
-        setActionMsg('Convite não encontrado.')
+        setActionMsg('Convite nao encontrado.')
         return
       }
       await respondToInvitation(inv.id, 'accept', token)
-      setActionMsg('Você entrou no grupo!')
-      setMembership((m) => m ? { ...m, isMember: true, pendingInvitation: false } : m)
+      setActionMsg('Voce entrou no grupo!')
+      setMembership((m) => (m ? { ...m, isMember: true, pendingInvitation: false } : m))
       await fetchContent()
     } catch (err) {
       setActionMsg(err instanceof Error ? err.message : 'Erro ao aceitar convite')
@@ -142,12 +145,12 @@ export function GroupDetailPage() {
       const invitations = await getMyInvitations(token)
       const inv = invitations.find((i) => i.groupId === groupId)
       if (!inv) {
-        setActionMsg('Convite não encontrado.')
+        setActionMsg('Convite nao encontrado.')
         return
       }
       await respondToInvitation(inv.id, 'decline', token)
       setActionMsg('Convite recusado.')
-      setMembership((m) => m ? { ...m, pendingInvitation: false } : m)
+      setMembership((m) => (m ? { ...m, pendingInvitation: false } : m))
     } catch (err) {
       setActionMsg(err instanceof Error ? err.message : 'Erro ao recusar convite')
     } finally {
@@ -166,10 +169,13 @@ export function GroupDetailPage() {
   if (error || !group) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <span className="mb-3 text-4xl">😕</span>
-        <p className="font-medium text-[var(--text-secondary)]">{error ?? 'Grupo não encontrado.'}</p>
+        <p className="font-medium text-[var(--text-secondary)]">
+          {error ?? 'Grupo nao encontrado.'}
+        </p>
         <Link to="/groups" className="mt-4">
-          <Button variant="outline" size="sm">Voltar para grupos</Button>
+          <Button variant="outline" size="sm">
+            Voltar para grupos
+          </Button>
         </Link>
       </div>
     )
@@ -180,7 +186,6 @@ export function GroupDetailPage() {
   return (
     <div className="space-y-6">
       <BlurFade delay={0.05}>
-        {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -202,24 +207,24 @@ export function GroupDetailPage() {
             <p className="mt-1 text-xs text-[var(--text-tertiary)]">/{group.slug}</p>
           </div>
 
-          {/* Actions for owner */}
           {membership?.isOwner && (
             <div className="flex shrink-0 gap-2">
               <Link to={`/groups/${id}/manage`}>
-                <Button variant="outline" size="sm">Gerenciar grupo</Button>
+                <Button variant="outline" size="sm">
+                  Gerenciar grupo
+                </Button>
               </Link>
             </div>
           )}
         </div>
       </BlurFade>
 
-      {/* Invitation banner */}
       {membership?.pendingInvitation && (
         <BlurFade delay={0.1}>
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-brand-200)] bg-[var(--color-brand-50)] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[var(--radius-xl)] border border-[var(--color-brand-200)] bg-[var(--color-brand-50)] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium text-[var(--color-brand-700)]">
-                Você foi convidado para este grupo!
+                Voce foi convidado para este grupo!
               </p>
               <p className="mt-0.5 text-sm text-[var(--color-brand-600)]">
                 Aceite para visualizar jogadores e peladas.
@@ -247,22 +252,21 @@ export function GroupDetailPage() {
         </BlurFade>
       )}
 
-      {/* Join request actions (for non-members who are not invited) */}
       {!membership?.isOwner && !membership?.isMember && !membership?.pendingInvitation && (
         <BlurFade delay={0.1}>
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium text-[var(--text-primary)]">
-                Você não é membro deste grupo.
+                Voce nao e membro deste grupo.
               </p>
               <p className="mt-0.5 text-sm text-[var(--text-secondary)]">
-                Solicite participação para visualizar o conteúdo.
+                Solicite participacao para visualizar o conteudo.
               </p>
             </div>
             {membership?.pendingRequest ? (
               <div className="flex shrink-0 items-center gap-3">
                 <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  Solicitação pendente
+                  Solicitacao pendente
                 </span>
                 <Button
                   variant="ghost"
@@ -280,25 +284,22 @@ export function GroupDetailPage() {
                 loading={actionLoading}
                 onClick={handleRequestJoin}
               >
-                Solicitar participação
+                Solicitar participacao
               </Button>
             )}
           </div>
         </BlurFade>
       )}
 
-      {/* Feedback message */}
       {actionMsg && (
-        <div className="rounded-xl border border-[var(--color-brand-200)] bg-[var(--color-brand-50)] p-3 text-sm text-[var(--color-brand-700)]">
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-brand-200)] bg-[var(--color-brand-50)] p-3 text-sm text-[var(--color-brand-700)]">
           {actionMsg}
         </div>
       )}
 
-      {/* Content (only for members and owner) */}
       {canSeeContent && (
         <BlurFade delay={0.15}>
-          {/* Tabs */}
-          <div className="border-b border-[var(--border-primary)]">
+          <div className="flex items-center justify-between border-b border-[var(--border-primary)]">
             <div className="flex gap-1">
               {(['players', 'games'] as Tab[]).map((t) => (
                 <button
@@ -309,7 +310,7 @@ export function GroupDetailPage() {
                     'relative px-4 py-2.5 text-sm font-medium transition-colors',
                     tab === t
                       ? 'text-[var(--color-brand-600)]'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                   )}
                 >
                   {t === 'players' ? 'Jogadores' : 'Peladas'}
@@ -319,6 +320,17 @@ export function GroupDetailPage() {
                 </button>
               ))}
             </div>
+
+            {tab === 'players' && players.length > 0 && (
+              <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
+            )}
+            {tab === 'games' && membership?.isOwner && (
+              <Link to={`/games/new?groupId=${id}`}>
+                <Button variant="primary" size="sm">
+                  Nova pelada
+                </Button>
+              </Link>
+            )}
           </div>
 
           {contentLoading ? (
@@ -327,7 +339,7 @@ export function GroupDetailPage() {
             </div>
           ) : (
             <div className="mt-6">
-              {tab === 'players' && <PlayerList players={players} />}
+              {tab === 'players' && <PlayerList players={players} viewMode={viewMode} />}
               {tab === 'games' && <GameList games={games} />}
             </div>
           )}

@@ -45,7 +45,7 @@ export function PlayerTopTeammates({
               <div className={cn('group relative', isDeleted && 'opacity-50')}>
                 <div
                   className={cn(
-                    'block rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-3',
+                    'block overflow-hidden rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-2 sm:p-3',
                     !isDeleted &&
                       'transition-colors hover:border-[var(--color-brand-400)] hover:bg-[var(--surface-secondary)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:ring-offset-2',
                     isDeleted && 'cursor-default',
@@ -57,16 +57,16 @@ export function PlayerTopTeammates({
                     playerWithAttrs={player}
                     prefix={
                       <span
-                        className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-tertiary)] text-xs font-bold text-[var(--text-tertiary)]"
+                        className="flex size-6 shrink-0 items-center justify-center rounded-md bg-[var(--surface-tertiary)] text-[10px] font-bold text-[var(--text-tertiary)] sm:size-8 sm:rounded-lg sm:text-xs"
                         aria-hidden
                       >
                         {index + 1}
                       </span>
                     }
-                    avatarSize="md"
+                    avatarSize="sm"
                   >
-                    <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-brand-700)]">
-                      {timesTogether} {timesTogether === 1 ? 'vez' : 'vezes'}
+                    <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-brand-700)] sm:px-2.5 sm:text-xs">
+                      {timesTogether}x
                     </span>
                   </PlayerRow>
                 </div>

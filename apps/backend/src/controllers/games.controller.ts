@@ -5,6 +5,13 @@ import { z } from 'zod'
 const createGameSchema = z.object({
   name: z.string().min(1).max(200),
   numberOfTeams: z.number().int().min(2).max(20),
+  groupId: z.string().optional().nullable(),
+  teamColors: z.record(z.string(), z.string()).optional().nullable(),
+})
+
+const updateGameSchema = z.object({
+  groupId: z.string().optional().nullable(),
+  teamColors: z.record(z.string(), z.string()).optional().nullable(),
 })
 
 const setPlayersSchema = z.object({
@@ -67,6 +74,27 @@ export async function create(req: Request, res: Response): Promise<void> {
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Failed to create game' })
+  }
+}
+
+export async function update(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params
+    const parsed = updateGameSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten() })
+      return
+    }
+    const userId = res.locals.userId as string
+    const result = await gameService.updateGame(id, userId, parsed.data)
+    if (result.error) {
+      res.status(400).json({ error: result.error })
+      return
+    }
+    res.json(result.game)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to update game' })
   }
 }
 

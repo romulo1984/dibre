@@ -145,13 +145,13 @@ export function PlayerDetailPage() {
       {/* Grid: Peladas + Top 5 parceiros — only for owner */}
       {isOwner && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card.Root className="overflow-hidden">
+            <Card.Content className="p-4 sm:p-6">
               <PlayerParticipatedGames games={data.games} />
             </Card.Content>
           </Card.Root>
-          <Card.Root>
-            <Card.Content className="p-6">
+          <Card.Root className="overflow-hidden">
+            <Card.Content className="p-4 sm:p-6">
               <PlayerTopTeammates teammates={data.teammates} />
             </Card.Content>
           </Card.Root>

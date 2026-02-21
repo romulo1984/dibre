@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { BlurFade } from '@/components/magicui/blur-fade'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Button } from '@/components/ui/Button/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { useAuthToken } from '@/hooks/useAuthToken'
@@ -39,22 +40,17 @@ export function GroupManagePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Invite by email
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
-  const [inviteResult, setInviteResult] = useState<{ type: 'success' | 'notFound' | 'error'; msg: string } | null>(null)
+  const [inviteResult, setInviteResult] = useState<{
+    type: 'success' | 'notFound' | 'error'
+    msg: string
+  } | null>(null)
 
-  // Request actions
   const [requestLoading, setRequestLoading] = useState<string | null>(null)
-
-  // Remove member
   const [removingMember, setRemovingMember] = useState<GroupMember | null>(null)
   const [removeLoading, setRemoveLoading] = useState(false)
-
-  // Game assignment
   const [gameToggleLoading, setGameToggleLoading] = useState<string | null>(null)
-
-  // Delete group
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
@@ -83,7 +79,6 @@ export function GroupManagePage() {
       .finally(() => setLoading(false))
   }, [fetchData])
 
-  // Guard: redirect if not owner
   useEffect(() => {
     if (!loading && membership && !membership.isOwner) {
       navigate(`/groups/${id}`, { replace: true })
@@ -199,51 +194,76 @@ export function GroupManagePage() {
     )
   }
 
-  if (error || !group) {
+  if (error && !group) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-[var(--text-secondary)]">{error ?? 'Grupo não encontrado.'}</p>
+        <p className="text-[var(--text-secondary)]">{error ?? 'Grupo nao encontrado.'}</p>
         <Link to="/groups" className="mt-4">
-          <Button variant="outline" size="sm">Voltar</Button>
+          <Button variant="outline" size="sm">
+            Voltar
+          </Button>
         </Link>
       </div>
     )
   }
 
+  if (!group) return null
+
   const assignedCount = ownerGames.filter((g) => g.groupId === id).length
+  const totalPeople = members.length + pendingInvitations.length
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <BlurFade delay={0.05}>
-        <div className="flex items-center justify-between gap-4">
+        <PageHeader.Root>
           <div>
             <Link
               to={`/groups/${id}`}
-              className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              className="mb-1 inline-flex items-center gap-1 text-sm text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
             >
-              ← {group.name}
+              <span className="text-xs">&larr;</span> {group.name}
             </Link>
-            <h1 className="mt-1 text-2xl font-bold text-[var(--text-primary)]">
-              Gerenciar grupo
-            </h1>
+            <PageHeader.Title>Gerenciar grupo</PageHeader.Title>
+          </div>
+        </PageHeader.Root>
+      </BlurFade>
+
+      {/* Stats */}
+      <BlurFade delay={0.08}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4">
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{members.length}</p>
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Membros</p>
+          </div>
+          <div className="rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4">
+            <p className="text-2xl font-bold text-[var(--text-primary)]">
+              {pendingInvitations.length}
+            </p>
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Convites pendentes</p>
+          </div>
+          <div className="rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4">
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{requests.length}</p>
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Solicitações</p>
+          </div>
+          <div className="rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4">
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{assignedCount}</p>
+            <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">Peladas no grupo</p>
           </div>
         </div>
       </BlurFade>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-[var(--radius-lg)] border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* ── Join Requests ── */}
+      {/* Join Requests */}
       {requests.length > 0 && (
         <BlurFade delay={0.1}>
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-              Solicitações pendentes ({requests.length})
-            </h2>
-            <div className="divide-y divide-[var(--border-primary)] overflow-hidden rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)]">
+          <Section title="Soliticações pendentes" count={requests.length} accentColor="amber">
+            <div className="divide-y divide-[var(--border-primary)]">
               {requests.map((req) => (
                 <div key={req.id} className="flex items-center justify-between gap-4 px-4 py-3">
                   <div className="min-w-0">
@@ -275,29 +295,33 @@ export function GroupManagePage() {
                 </div>
               ))}
             </div>
-          </section>
+          </Section>
         </BlurFade>
       )}
 
-      {/* ── Members ── */}
+      {/* Members */}
       <BlurFade delay={0.15}>
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-            Membros ({members.length + pendingInvitations.length})
-          </h2>
+        <Section title="Membros" count={totalPeople}>
           {members.length === 0 && pendingInvitations.length === 0 ? (
-            <p className="text-sm text-[var(--text-tertiary)]">Nenhum membro ainda.</p>
+            <p className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">
+              Nenhum membro ainda.
+            </p>
           ) : (
-            <div className="divide-y divide-[var(--border-primary)] overflow-hidden rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)]">
+            <div className="divide-y divide-[var(--border-primary)]">
               {members.map((member) => (
                 <div key={member.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                      {member.user?.name ?? member.user?.email ?? 'Membro'}
-                    </p>
-                    {member.user?.email && member.user.name && (
-                      <p className="text-xs text-[var(--text-tertiary)]">{member.user.email}</p>
-                    )}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-tertiary)] text-xs font-semibold text-[var(--text-secondary)]">
+                      {(member.user?.name ?? member.user?.email ?? 'M')[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                        {member.user?.name ?? member.user?.email ?? 'Membro'}
+                      </p>
+                      {member.user?.email && member.user.name && (
+                        <p className="text-xs text-[var(--text-tertiary)]">{member.user.email}</p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
@@ -310,40 +334,50 @@ export function GroupManagePage() {
                 </div>
               ))}
               {pendingInvitations.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between gap-4 px-4 py-3 opacity-75">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                      {inv.invitedUser?.name ?? inv.invitedUser?.email ?? 'Usuário convidado'}
-                    </p>
-                    {inv.invitedUser?.email && inv.invitedUser.name && (
-                      <p className="text-xs text-[var(--text-tertiary)]">{inv.invitedUser.email}</p>
-                    )}
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between gap-4 px-4 py-3 opacity-60"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--border-secondary)] text-xs text-[var(--text-tertiary)]">
+                      ?
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                        {inv.invitedUser?.name ?? inv.invitedUser?.email ?? 'Usuario convidado'}
+                      </p>
+                      {inv.invitedUser?.email && inv.invitedUser.name && (
+                        <p className="text-xs text-[var(--text-tertiary)]">
+                          {inv.invitedUser.email}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    Convite pendente
+                  <span className="shrink-0 rounded-[var(--radius-sm)] bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    Pendente
                   </span>
                 </div>
               ))}
             </div>
           )}
-        </section>
+        </Section>
       </BlurFade>
 
-      {/* ── Invite by email ── */}
+      {/* Invite by email */}
       <BlurFade delay={0.2}>
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-            Convidar por e-mail
-          </h2>
-          <div className="rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4 space-y-3">
+        <Section title="Convidar por e-mail">
+          <div className="space-y-3 p-4">
             <form onSubmit={handleInviteByEmail} className="flex gap-2">
               <input
                 type="email"
                 value={inviteEmail}
-                onChange={(e) => { setInviteEmail(e.target.value); setInviteResult(null) }}
+                onChange={(e) => {
+                  setInviteEmail(e.target.value)
+                  setInviteResult(null)
+                }}
                 placeholder="email@exemplo.com"
                 required
-                className="min-w-0 flex-1 rounded-xl border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--color-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]/20"
+                className="min-w-0 flex-1 rounded-[var(--radius-lg)] border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--color-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]/20"
               />
               <Button
                 type="submit"
@@ -358,42 +392,46 @@ export function GroupManagePage() {
             </form>
 
             {inviteResult && (
-              <p className={`text-sm ${
-                inviteResult.type === 'success'
-                  ? 'text-green-600 dark:text-green-400'
-                  : inviteResult.type === 'notFound'
-                  ? 'text-amber-600 dark:text-amber-400'
-                  : 'text-red-600 dark:text-red-400'
-              }`}>
+              <p
+                className={`text-sm ${
+                  inviteResult.type === 'success'
+                    ? 'text-green-600 dark:text-green-400'
+                    : inviteResult.type === 'notFound'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-red-600 dark:text-red-400'
+                }`}
+              >
                 {inviteResult.msg}
               </p>
             )}
           </div>
-        </section>
+        </Section>
       </BlurFade>
 
-      {/* ── Game assignment ── */}
+      {/* Game assignment */}
       <BlurFade delay={0.25}>
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
-              Peladas do grupo
-            </h2>
-            <span className="text-xs text-[var(--text-tertiary)]">
-              {assignedCount} de {ownerGames.length} atribuídas
-            </span>
-          </div>
+        <Section
+          title="Peladas do grupo"
+          badge={
+            ownerGames.length > 0 ? (
+              <span className="text-xs text-[var(--text-tertiary)]">
+                {assignedCount} de {ownerGames.length} atribuídas
+              </span>
+            ) : undefined
+          }
+        >
           {ownerGames.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-4">
-              <p className="text-sm text-[var(--text-tertiary)]">
-                Você ainda não criou nenhuma pelada.{' '}
-                <Link to="/games/new" className="text-[var(--color-brand-600)] hover:underline">
-                  Criar pelada
-                </Link>
-              </p>
-            </div>
+            <p className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">
+              Você ainda não criou nenhuma pelada.{' '}
+              <Link
+                to="/games/new"
+                className="font-medium text-[var(--color-brand-600)] hover:underline"
+              >
+                Criar pelada
+              </Link>
+            </p>
           ) : (
-            <div className="divide-y divide-[var(--border-primary)] overflow-hidden rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)]">
+            <div className="divide-y divide-[var(--border-primary)]">
               {ownerGames.map((game) => {
                 const isAssigned = game.groupId === id
                 return (
@@ -404,7 +442,7 @@ export function GroupManagePage() {
                           {game.name}
                         </p>
                         {isAssigned && (
-                          <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-2 py-0.5 text-xs font-medium text-[var(--color-brand-700)]">
+                          <span className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--color-brand-50)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-brand-700)]">
                             No grupo
                           </span>
                         )}
@@ -428,20 +466,20 @@ export function GroupManagePage() {
               })}
             </div>
           )}
-        </section>
+        </Section>
       </BlurFade>
 
-      {/* ── Danger zone ── */}
+      {/* Danger zone */}
       <BlurFade delay={0.3}>
-        <section className="space-y-3">
+        <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-red-500">
             Zona perigosa
           </h2>
-          <div className="rounded-2xl border border-red-200 bg-[var(--surface-primary)] p-4 dark:border-red-900">
-            <div className="flex items-center justify-between gap-4">
+          <div className="overflow-hidden rounded-[var(--radius-xl)] border border-red-200 bg-[var(--surface-primary)] dark:border-red-900">
+            <div className="flex items-center justify-between gap-4 p-4">
               <div>
-                <p className="font-medium text-[var(--text-primary)]">Deletar grupo</p>
-                <p className="mt-0.5 text-sm text-[var(--text-secondary)]">
+                <p className="text-sm font-medium text-[var(--text-primary)]">Deletar grupo</p>
+                <p className="mt-0.5 text-xs text-[var(--text-tertiary)]">
                   Remove o grupo permanentemente. Membros perderão o acesso.
                 </p>
               </div>
@@ -455,10 +493,9 @@ export function GroupManagePage() {
               </Button>
             </div>
           </div>
-        </section>
+        </div>
       </BlurFade>
 
-      {/* Confirm remove member */}
       <ConfirmDialog
         open={!!removingMember}
         title="Remover membro"
@@ -470,17 +507,52 @@ export function GroupManagePage() {
         loading={removeLoading}
       />
 
-      {/* Confirm delete group */}
       <ConfirmDialog
         open={showDeleteConfirm}
         title="Deletar grupo"
-        description={`Tem certeza que deseja deletar o grupo "${group.name}"? Esta ação não pode ser desfeita.`}
+        description={`Tem certeza que deseja deletar o grupo "${group.name}"? Esta acao nao pode ser desfeita.`}
         confirmLabel="Deletar grupo"
         variant="danger"
         onConfirm={handleDeleteGroup}
         onCancel={() => setShowDeleteConfirm(false)}
         loading={deleteLoading}
       />
+    </div>
+  )
+}
+
+function Section({
+  title,
+  count,
+  badge,
+  accentColor,
+  children,
+}: {
+  title: string
+  count?: number
+  badge?: React.ReactNode
+  accentColor?: 'amber' | 'brand'
+  children: React.ReactNode
+}) {
+  const dotColor = accentColor === 'amber' ? 'bg-amber-400' : 'bg-[var(--color-brand-500)]'
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`inline-block size-1.5 rounded-full ${dotColor}`} />
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            {title}
+            {count !== undefined && (
+              <span className="ml-1.5 text-[var(--text-tertiary)]">({count})</span>
+            )}
+          </h2>
+        </div>
+        {badge}
+      </div>
+      <div className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)]">
+        {children}
+      </div>
     </div>
   )
 }

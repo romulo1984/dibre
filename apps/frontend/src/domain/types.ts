@@ -61,6 +61,7 @@ export interface Game {
   id: string
   name: string
   numberOfTeams: number
+  teamColors?: Record<string, string> | null
   createdById: string | null
   createdByName?: string | null
   isOwner?: boolean

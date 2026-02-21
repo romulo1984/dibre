@@ -41,15 +41,36 @@ export async function getGameById(
 }
 
 export async function createGame(
-  data: { name: string; numberOfTeams: number },
-  ownerId: string
+  data: { name: string; numberOfTeams: number; groupId?: string | null; teamColors?: Record<string, string> | null },
+  ownerId: string,
 ): Promise<{ error?: string; game?: GameEntity }> {
   if (!data.name?.trim()) return { error: 'Name is required' }
   if (data.numberOfTeams < 2) return { error: 'At least 2 teams required' }
+  if (data.groupId) {
+    const isOwner = await groupRepo.isGroupOwner(data.groupId, ownerId)
+    if (!isOwner) return { error: 'You are not the owner of this group' }
+  }
   const game = await gameRepo.createGame({
-    ...data,
+    name: data.name,
+    numberOfTeams: data.numberOfTeams,
     createdById: ownerId,
+    groupId: data.groupId ?? null,
+    teamColors: data.teamColors ?? null,
   })
+  return { game }
+}
+
+export async function updateGame(
+  id: string,
+  ownerId: string,
+  data: { groupId?: string | null; teamColors?: Record<string, string> | null },
+): Promise<{ error?: string; game?: GameEntity }> {
+  if (data.groupId) {
+    const isOwner = await groupRepo.isGroupOwner(data.groupId, ownerId)
+    if (!isOwner) return { error: 'You are not the owner of this group' }
+  }
+  const game = await gameRepo.updateGame(id, ownerId, data)
+  if (!game) return { error: 'Game not found' }
   return { game }
 }
 
