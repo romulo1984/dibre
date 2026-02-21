@@ -16,6 +16,17 @@ enum Role {
   viewer  // legado / somente leitura
 }
 
+enum GroupRequestStatus {
+  pending
+  accepted
+  declined
+}
+
+enum NotificationType {
+  GROUP_JOIN_REQUEST
+  GROUP_INVITATION
+}
+
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
@@ -24,8 +35,17 @@ model User {
   role      Role     @default(member)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  games     Game[]
-  players   Player[]
+
+  games    Game[]
+  players  Player[]
+
+  ownedGroups           Group[]           @relation("GroupOwner")
+  groupMemberships      GroupMember[]
+  groupJoinRequests     GroupJoinRequest[]
+  sentInvitations       GroupInvitation[] @relation("InvitedBy")
+  receivedInvitations   GroupInvitation[] @relation("InvitedUser")
+  sentNotifications     Notification[]    @relation("NotificationSender")
+  receivedNotifications Notification[]    @relation("NotificationRecipient")
 }
 
 model Player {
@@ -56,9 +76,12 @@ model Game {
   deletedAt     DateTime? // soft delete
   createdById   String?
   createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  groupId       String?   // optional: if set, visible to group members
+  group         Group?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
   players       GamePlayer[]
   teams         Team[]
   @@index([createdById])
+  @@index([groupId])
 }
 
 model GamePlayer {
@@ -89,4 +112,96 @@ model Team {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   @@index([gameId])
+}
+
+// ── Groups ──────────────────────────────────────────────────────────────────
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  slug        String    @unique
+  ownerId     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  owner         User              @relation("GroupOwner", fields: [ownerId], references: [id])
+  members       GroupMember[]
+  joinRequests  GroupJoinRequest[]
+  invitations   GroupInvitation[]
+  notifications Notification[]
+  games         Game[]
+
+  @@index([ownerId])
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupJoinRequest {
+  id        String             @id @default(cuid())
+  groupId   String
+  userId    String
+  status    GroupRequestStatus @default(pending)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
+}
+
+model GroupInvitation {
+  id              String             @id @default(cuid())
+  groupId         String
+  invitedUserId   String
+  invitedByUserId String
+  status          GroupRequestStatus @default(pending)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  group       Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitedUser User  @relation("InvitedUser", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  invitedBy   User  @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, invitedUserId])
+  @@index([groupId])
+  @@index([invitedUserId])
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id         String           @id @default(cuid())
+  type       NotificationType
+  toUserId   String
+  fromUserId String
+  groupId    String?
+  relatedId  String?          // ID of the related request or invitation
+  message    String
+  read       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  toUser   User   @relation("NotificationRecipient", fields: [toUserId], references: [id], onDelete: Cascade)
+  fromUser User   @relation("NotificationSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  group    Group? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([toUserId])
+  @@index([fromUserId])
 }

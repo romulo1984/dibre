@@ -26,15 +26,27 @@ export async function getById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params
     const userId = res.locals.userId as string
-    const game = await gameService.getGameById(id, userId)
-    if (!game) {
+    const result = await gameService.getGameById(id, userId)
+    if (!result) {
       res.status(404).json({ error: 'Game not found' })
       return
     }
-    res.json(game)
+    res.json({ ...result.game, createdByName: result.createdByName, isOwner: result.isOwner })
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Failed to get game' })
+  }
+}
+
+export async function getTeamPlayers(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params
+    const userId = res.locals.userId as string
+    const players = await gameService.getGameTeamPlayers(id, userId)
+    res.json(players)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to get team players' })
   }
 }
 

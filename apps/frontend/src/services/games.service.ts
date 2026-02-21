@@ -1,4 +1,4 @@
-import type { Game, TeamAssignment } from '@/domain/types'
+import type { Game, TeamAssignment, Player } from '@/domain/types'
 import { api } from '@/services/api'
 
 export async function listGames(token: string): Promise<Game[]> {
@@ -44,4 +44,8 @@ export async function runDraw(gameId: string, token: string): Promise<{ teams: T
 
 export async function deleteGame(id: string, token: string): Promise<void> {
   return api.delete(`/games/${id}`, token)
+}
+
+export async function getGameTeamPlayers(id: string, token: string): Promise<Player[]> {
+  return api.get<Player[]>(`/games/${id}/team-players`, token)
 }

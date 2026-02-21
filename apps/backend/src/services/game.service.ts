@@ -1,15 +1,43 @@
 import type { GameEntity } from '../domain/game.js'
 import type { TeamAssignment } from '../domain/game.js'
+import type { PlayerEntity } from '../domain/player.js'
 import * as gameRepo from '../repositories/game.repository.js'
 import * as playerRepo from '../repositories/player.repository.js'
+import * as groupRepo from '../repositories/group.repository.js'
 import { drawBalancedTeams } from './balance.service.js'
+
+/**
+ * Returns game if viewer is the owner OR is a member of the specific group the game belongs to.
+ * Games without a groupId are private — only the owner can view them.
+ */
+async function resolveGameForViewer(id: string, viewerId: string): Promise<GameEntity | null> {
+  const asOwner = await gameRepo.findGameByIdForOwner(id, viewerId)
+  if (asOwner) return asOwner
+  const game = await gameRepo.findGameById(id)
+  if (!game || game.deletedAt) return null
+  // Games not assigned to any group are private
+  if (!game.groupId) return null
+  const isMember = await groupRepo.isGroupMember(game.groupId, viewerId)
+  return isMember ? game : null
+}
 
 export async function listGames(ownerId: string): Promise<GameEntity[]> {
   return gameRepo.findAllGamesByOwner(ownerId)
 }
 
-export async function getGameById(id: string, ownerId: string): Promise<GameEntity | null> {
-  return gameRepo.findGameByIdForOwner(id, ownerId)
+export async function getGameById(
+  id: string,
+  viewerId: string
+): Promise<{ game: GameEntity; createdByName: string | null; isOwner: boolean } | null> {
+  const game = await resolveGameForViewer(id, viewerId)
+  if (!game) return null
+  const isOwner = game.createdById === viewerId
+  let createdByName: string | null = null
+  if (!isOwner && game.createdById) {
+    const creator = await groupRepo.findUserById(game.createdById)
+    createdByName = creator?.name ?? creator?.email ?? null
+  }
+  return { game, createdByName, isOwner }
 }
 
 export async function createGame(
@@ -36,8 +64,8 @@ export async function setGamePlayers(
   return {}
 }
 
-export async function getGamePlayers(gameId: string, ownerId: string): Promise<string[]> {
-  const game = await gameRepo.findGameByIdForOwner(gameId, ownerId)
+export async function getGamePlayers(gameId: string, viewerId: string): Promise<string[]> {
+  const game = await resolveGameForViewer(gameId, viewerId)
   if (!game) return []
   return gameRepo.getGamePlayerIds(gameId)
 }
@@ -59,9 +87,9 @@ export async function runDraw(
 
 export async function getGameTeams(
   gameId: string,
-  ownerId: string
+  viewerId: string
 ): Promise<TeamAssignment[]> {
-  const game = await gameRepo.findGameByIdForOwner(gameId, ownerId)
+  const game = await resolveGameForViewer(gameId, viewerId)
   if (!game) return []
   const teams = await gameRepo.getTeamsByGameId(gameId)
   const allPlayerIds = [...new Set(teams.flatMap((t) => t.playerIds))]
@@ -72,6 +100,19 @@ export async function getGameTeams(
     playerIdsWith5Stars: t.playerIds.filter((id) => starsByPlayerId.get(id) === 5),
     playerIdsWith1Star: t.playerIds.filter((id) => starsByPlayerId.get(id) === 1),
   }))
+}
+
+/** Returns full player data for all players in drawn teams — accessible to group members. */
+export async function getGameTeamPlayers(
+  gameId: string,
+  viewerId: string
+): Promise<PlayerEntity[]> {
+  const game = await resolveGameForViewer(gameId, viewerId)
+  if (!game) return []
+  const teams = await gameRepo.getTeamsByGameId(gameId)
+  const allPlayerIds = [...new Set(teams.flatMap((t) => t.playerIds))]
+  if (allPlayerIds.length === 0) return []
+  return playerRepo.findPlayersByIds(allPlayerIds)
 }
 
 export async function deleteGame(

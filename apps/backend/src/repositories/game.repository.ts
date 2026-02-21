@@ -7,6 +7,7 @@ function toGameEntity(row: {
   name: string
   numberOfTeams: number
   createdById: string | null
+  groupId?: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -16,6 +17,7 @@ function toGameEntity(row: {
     name: row.name,
     numberOfTeams: row.numberOfTeams,
     createdById: row.createdById,
+    groupId: row.groupId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt ?? null,
@@ -117,6 +119,14 @@ export async function getTeamsByGameId(gameId: string): Promise<TeamRecord[]> {
       avgSpeed: r.avgSpeed ?? 0,
     })
   )
+}
+
+export async function findGamesByGroupId(groupId: string): Promise<GameEntity[]> {
+  const rows = await prisma.game.findMany({
+    where: { groupId, deletedAt: null },
+    orderBy: { createdAt: 'desc' },
+  })
+  return rows.map(toGameEntity)
 }
 
 export async function deleteGame(id: string, ownerId: string): Promise<boolean> {
