@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react'
 import { Logo } from '@/components/ui/Logo'
 import { NotificationCenter } from '@/features/notifications/NotificationCenter'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
@@ -15,6 +15,8 @@ const navLinks = [
 export function Layout() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user } = useUser()
+  const isAdmin = (user?.publicMetadata as { role?: string } | undefined)?.role === 'admin'
   useScrollToTop()
 
   function closeMenu() {
@@ -71,6 +73,22 @@ export function Layout() {
                   </Link>
                 )
               })}
+              {isAdmin && (
+                <Link
+                  to="/admin/users"
+                  className={cn(
+                    'relative rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                    location.pathname.startsWith('/admin')
+                      ? 'text-amber-600'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
+                  )}
+                >
+                  Admin
+                  {location.pathname.startsWith('/admin') && (
+                    <span className="absolute inset-x-1 -bottom-[calc(0.5rem+1px)] h-0.5 rounded-full bg-amber-500" />
+                  )}
+                </Link>
+              )}
 
               <div className="ml-3 h-6 w-px bg-[var(--border-primary)]" />
             </div>
@@ -145,6 +163,23 @@ export function Layout() {
                 </Link>
               )
             })}
+            {isAdmin && (
+              <Link
+                to="/admin/users"
+                onClick={closeMenu}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors',
+                  location.pathname.startsWith('/admin')
+                    ? 'bg-amber-50 text-amber-600'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]',
+                )}
+              >
+                Admin
+                <span className="rounded-[var(--radius-sm)] bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                  Master
+                </span>
+              </Link>
+            )}
           </div>
         )}
       </nav>

@@ -1,16 +1,9 @@
 import type { Request, Response, NextFunction } from 'express'
-import { createClerkClient, getAuth } from '@clerk/express'
+import { getAuth } from '@clerk/express'
 import type { Role } from '../domain/game.js'
 import { upsertUserFromClerk } from '../repositories/user.repository.js'
 import type { AuthLocals } from '../types/auth.js'
-
-let _clerkClient: ReturnType<typeof createClerkClient> | null = null
-function getClerkClient() {
-  if (!_clerkClient) {
-    _clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
-  }
-  return _clerkClient
-}
+import { getClerkClient } from '../lib/clerk.js'
 
 export type { AuthLocals }
 

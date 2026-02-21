@@ -178,6 +178,9 @@ export function GameDetailPage() {
       // Refresh players map after draw
       const teamPlayers = await getGameTeamPlayers(id, token)
       setPlayersMap(new Map(teamPlayers.map((p) => [p.id, p])))
+      setTimeout(() => {
+        document.getElementById('teams-section')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro no sorteio')
     } finally {
@@ -334,7 +337,7 @@ export function GameDetailPage() {
 
       {/* Teams & Stats */}
       {teams.length > 0 && (
-        <section>
+        <section id="teams-section" className="scroll-mt-6">
           <BlurFade delay={0.3}>
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Times e estatísticas</h2>

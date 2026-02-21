@@ -15,6 +15,8 @@ import { GroupsPage } from '@/pages/GroupsPage'
 import { GroupNewPage } from '@/pages/GroupNewPage'
 import { GroupDetailPage } from '@/pages/GroupDetailPage'
 import { GroupManagePage } from '@/pages/GroupManagePage'
+import { AdminUsersPage } from '@/pages/AdminUsersPage'
+import { RequireAdmin } from '@/components/auth/RequireAdmin'
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() || ''
 
@@ -41,6 +43,9 @@ export function AppRoutes() {
           <Route path="groups/new" element={<GroupNewPage />} />
           <Route path="groups/:id" element={<GroupDetailPage />} />
           <Route path="groups/:id/manage" element={<GroupManagePage />} />
+          <Route element={<RequireAdmin />}>
+            <Route path="admin/users" element={<AdminUsersPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

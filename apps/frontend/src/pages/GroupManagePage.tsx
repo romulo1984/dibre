@@ -415,7 +415,7 @@ export function GroupManagePage() {
           badge={
             ownerGames.length > 0 ? (
               <span className="text-xs text-[var(--text-tertiary)]">
-                {assignedCount} de {ownerGames.length} atribuidas
+                {assignedCount} de {ownerGames.length} atribuídas
               </span>
             ) : undefined
           }

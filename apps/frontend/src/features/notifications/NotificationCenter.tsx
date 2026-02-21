@@ -136,76 +136,85 @@ export function NotificationCenter() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-2xl border border-[var(--border-primary)] bg-[var(--surface-primary)] shadow-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[var(--border-primary)] px-4 py-3">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">
-              Notificações
-              {unreadCount > 0 && (
-                <span className="ml-2 rounded-full bg-[var(--color-brand-100)] px-1.5 py-0.5 text-xs font-bold text-[var(--color-brand-700)]">
-                  {unreadCount}
-                </span>
-              )}
-            </span>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                className="cursor-pointer text-xs text-[var(--color-brand-600)] hover:underline"
-              >
-                Marcar todas como lidas
-              </button>
-            )}
-          </div>
-
-          {/* List */}
-          <div className="max-h-96 overflow-y-auto">
-            {loading && notifications.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <span className="size-5 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <span className="mb-2 text-3xl">🔔</span>
-                <p className="text-sm text-[var(--text-tertiary)]">Nenhuma notificação.</p>
-              </div>
-            ) : (
-              notifications.map((notif) => (
-                <button
-                  key={notif.id}
-                  type="button"
-                  onClick={() => handleMarkRead(notif)}
-                  className={cn(
-                    'flex w-full cursor-pointer items-start gap-3 border-b border-[var(--border-primary)] px-4 py-3 text-left transition-colors last:border-0',
-                    notif.read
-                      ? 'hover:bg-[var(--surface-secondary)]'
-                      : 'bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-100)]'
-                  )}
-                >
-                  <span className="mt-0.5 shrink-0 text-lg">
-                    {getNotificationIcon(notif.type)}
+        <>
+          {/* Backdrop no mobile */}
+          <div
+            className="fixed inset-0 z-40 bg-black/20 sm:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <div className="fixed inset-x-3 top-14 z-50 max-h-[calc(100dvh-4.5rem)] rounded-[var(--radius-xl)] border border-[var(--border-primary)] bg-[var(--surface-primary)] shadow-xl sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-80">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[var(--border-primary)] px-4 py-3">
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                Notificações
+                {unreadCount > 0 && (
+                  <span className="ml-2 rounded-full bg-[var(--color-brand-100)] px-1.5 py-0.5 text-xs font-bold text-[var(--color-brand-700)]">
+                    {unreadCount}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={cn(
-                        'text-sm leading-snug',
-                        notif.read ? 'text-[var(--text-secondary)]' : 'font-medium text-[var(--text-primary)]'
-                      )}
-                    >
-                      {notif.message}
-                    </p>
-                    <p className="mt-1 text-xs text-[var(--text-tertiary)]">
-                      {formatRelativeTime(notif.createdAt)}
-                    </p>
-                  </div>
-                  {!notif.read && (
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--color-brand-600)]" />
-                  )}
+                )}
+              </span>
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  className="cursor-pointer text-xs text-[var(--color-brand-600)] hover:underline"
+                >
+                  Marcar todas como lidas
                 </button>
-              ))
-            )}
+              )}
+            </div>
+
+            {/* Lista */}
+            <div className="max-h-80 overflow-y-auto sm:max-h-96">
+              {loading && notifications.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <span className="size-5 animate-spin rounded-full border-2 border-[var(--color-brand-500)] border-t-transparent" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <span className="mb-2 text-3xl">🔔</span>
+                  <p className="text-sm text-[var(--text-tertiary)]">Nenhuma notificação.</p>
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <button
+                    key={notif.id}
+                    type="button"
+                    onClick={() => handleMarkRead(notif)}
+                    className={cn(
+                      'flex w-full cursor-pointer items-start gap-3 border-b border-[var(--border-primary)] px-4 py-3 text-left transition-colors last:border-0',
+                      notif.read
+                        ? 'hover:bg-[var(--surface-secondary)]'
+                        : 'bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-100)]',
+                    )}
+                  >
+                    <span className="mt-0.5 shrink-0 text-lg">
+                      {getNotificationIcon(notif.type)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          'text-sm leading-snug',
+                          notif.read
+                            ? 'text-[var(--text-secondary)]'
+                            : 'font-medium text-[var(--text-primary)]',
+                        )}
+                      >
+                        {notif.message}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--text-tertiary)]">
+                        {formatRelativeTime(notif.createdAt)}
+                      </p>
+                    </div>
+                    {!notif.read && (
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[var(--color-brand-600)]" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )

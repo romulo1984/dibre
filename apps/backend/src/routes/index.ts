@@ -1,10 +1,11 @@
 import express from 'express'
 import { clerkMiddleware } from '@clerk/express'
-import { requireAuth } from '../middleware/auth.middleware.js'
+import { requireAuth, requireAdmin } from '../middleware/auth.middleware.js'
 import * as playersController from '../controllers/players.controller.js'
 import * as gamesController from '../controllers/games.controller.js'
 import * as groupsController from '../controllers/groups.controller.js'
 import * as notificationsController from '../controllers/notifications.controller.js'
+import * as adminController from '../controllers/admin.controller.js'
 
 const router: express.Router = express.Router()
 
@@ -73,5 +74,9 @@ router.post('/notifications/read-all', requireAuth, notificationsController.mark
 
 // ---- User search (for group invitations) ----
 router.get('/users/search', requireAuth, groupsController.searchUsers)
+
+// ---- Admin ----
+router.get('/admin/users', requireAuth, requireAdmin, adminController.listUsers)
+router.delete('/admin/users/:id', requireAuth, requireAdmin, adminController.deleteUser)
 
 export default router
