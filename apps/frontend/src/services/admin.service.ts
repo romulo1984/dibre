@@ -35,3 +35,10 @@ export async function listUsers(
 export async function deleteUser(id: string, token: string): Promise<void> {
   return api.delete(`/admin/users/${id}`, token)
 }
+
+export async function impersonateUser(
+  id: string,
+  token: string,
+): Promise<{ token: string }> {
+  return api.post<{ token: string }>(`/admin/users/${id}/impersonate`, {}, token)
+}

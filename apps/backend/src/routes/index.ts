@@ -78,5 +78,6 @@ router.get('/users/search', requireAuth, groupsController.searchUsers)
 // ---- Admin ----
 router.get('/admin/users', requireAuth, requireAdmin, adminController.listUsers)
 router.delete('/admin/users/:id', requireAuth, requireAdmin, adminController.deleteUser)
+router.post('/admin/users/:id/impersonate', requireAuth, requireAdmin, adminController.impersonate)
 
 export default router

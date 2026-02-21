@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { useClerk } from '@clerk/clerk-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Card } from '@/components/ui/Card/Card'
 import { Button } from '@/components/ui/Button/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { BlurFade } from '@/components/magicui/blur-fade'
 import { useAuthToken } from '@/hooks/useAuthToken'
-import { listUsers, deleteUser } from '@/services/admin.service'
+import { listUsers, deleteUser, impersonateUser } from '@/services/admin.service'
 import type { AdminUser } from '@/services/admin.service'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +19,122 @@ function StatBadge({ label, value }: { label: string; value: number }) {
       <span className="text-base font-bold text-[var(--text-primary)] sm:text-lg">{value}</span>
       <span className="text-[10px] text-[var(--text-tertiary)] sm:text-xs">{label}</span>
     </div>
+  )
+}
+
+function UserActionsMenu({
+  user,
+  onImpersonate,
+  onDelete,
+}: {
+  user: AdminUser
+  onImpersonate: (user: AdminUser) => void
+  onDelete: (user: AdminUser) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setPos({
+      top: rect.bottom + 4,
+      left: rect.right - 176,
+    })
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node
+      if (
+        triggerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
+      ) return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [open])
+
+  const isAdmin = user.role === 'admin'
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex size-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-tertiary)] hover:text-[var(--text-primary)]"
+        aria-label="Ações"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="8" cy="3" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="8" cy="13" r="1.5" />
+        </svg>
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] w-48 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border-primary)] bg-[var(--surface-primary)] shadow-lg"
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {isAdmin && (
+            <div className="px-3 py-2 text-[11px] text-[var(--text-tertiary)]">
+              Ações indisponíveis para admins
+            </div>
+          )}
+          <button
+            type="button"
+            disabled={isAdmin}
+            className={cn(
+              'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
+              isAdmin
+                ? 'cursor-not-allowed text-[var(--text-tertiary)]'
+                : 'text-[var(--text-primary)] hover:bg-[var(--surface-tertiary)]',
+            )}
+            onClick={() => {
+              if (isAdmin) return
+              setOpen(false)
+              onImpersonate(user)
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            Entrar como
+          </button>
+          <div className="mx-2 border-t border-[var(--border-primary)]" />
+          <button
+            type="button"
+            disabled={isAdmin}
+            className={cn(
+              'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
+              isAdmin
+                ? 'cursor-not-allowed text-[var(--text-tertiary)]'
+                : 'text-red-600 hover:bg-red-50',
+            )}
+            onClick={() => {
+              if (isAdmin) return
+              setOpen(false)
+              onDelete(user)
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Excluir
+          </button>
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }
 
@@ -40,6 +158,7 @@ const ROLE_LABELS: Record<string, { label: string; className: string }> = {
 
 export function AdminUsersPage() {
   const getToken = useAuthToken()
+  const clerk = useClerk()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -50,6 +169,8 @@ export function AdminUsersPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [impersonateTarget, setImpersonateTarget] = useState<AdminUser | null>(null)
+  const [impersonating, setImpersonating] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
 
@@ -87,11 +208,40 @@ export function AdminUsersPage() {
       if (!token) return
       await deleteUser(deleteTarget.id, token)
       setDeleteTarget(null)
-      fetchUsers()
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id))
+      setTotal((prev) => prev - 1)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao excluir usuário')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  async function handleImpersonate() {
+    if (!impersonateTarget) return
+    setImpersonating(true)
+    setError(null)
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const { token: ticket } = await impersonateUser(impersonateTarget.id, token)
+
+      await clerk.signOut()
+
+      const signInAttempt = await clerk.client.signIn.create({
+        strategy: 'ticket',
+        ticket,
+      })
+
+      if (signInAttempt.status === 'complete' && signInAttempt.createdSessionId) {
+        await clerk.setActive({ session: signInAttempt.createdSessionId })
+        window.location.href = '/'
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao entrar como usuário')
+      setImpersonating(false)
+      setImpersonateTarget(null)
     }
   }
 
@@ -233,19 +383,11 @@ export function AdminUsersPage() {
 
                       {/* Actions */}
                       <div className="flex shrink-0 items-center sm:ml-2">
-                        {user.role !== 'admin' ? (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => setDeleteTarget(user)}
-                          >
-                            Excluir
-                          </Button>
-                        ) : (
-                          <span className="rounded-[var(--radius-md)] bg-[var(--surface-secondary)] px-3 py-1.5 text-[10px] font-medium text-[var(--text-tertiary)]">
-                            Protegido
-                          </span>
-                        )}
+                        <UserActionsMenu
+                          user={user}
+                          onImpersonate={setImpersonateTarget}
+                          onDelete={setDeleteTarget}
+                        />
                       </div>
                     </div>
                   </Card.Root>
@@ -291,6 +433,18 @@ export function AdminUsersPage() {
           loading={deleting}
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+
+        {/* Impersonate confirmation */}
+        <ConfirmDialog
+          open={!!impersonateTarget}
+          title="Entrar como outro usuário"
+          description={`Você será deslogado da sua conta admin e logado como "${impersonateTarget?.name || impersonateTarget?.email || 'Sem nome'}". Para voltar à sua conta, faça logout e entre novamente com suas credenciais de admin.`}
+          confirmLabel="Entrar como"
+          cancelLabel="Cancelar"
+          loading={impersonating}
+          onConfirm={handleImpersonate}
+          onCancel={() => setImpersonateTarget(null)}
         />
       </div>
     </BlurFade>

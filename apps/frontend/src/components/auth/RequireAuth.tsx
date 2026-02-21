@@ -25,8 +25,8 @@ export function RequireAuth() {
                 Faça login para acessar
               </h1>
               <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                Suas listas de jogadores e peladas, além do sorteio de times, ficam disponíveis
-                após o login. Cada usuário vê apenas o que criou.
+                Monte suas listas, equilibre os times e deixe o sorteio por nossa conta. Sua pelada
+                mais organizada começa aqui.
               </p>
               <div className="mt-6">
                 <SignInButton mode="modal" forceRedirectUrl={location.pathname}>

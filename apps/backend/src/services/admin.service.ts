@@ -29,3 +29,16 @@ export async function deleteUser(userId: string): Promise<boolean> {
 export async function getUserById(userId: string) {
   return adminRepo.getUserById(userId)
 }
+
+export async function impersonateUser(targetUserId: string): Promise<string | null> {
+  const user = await adminRepo.getUserById(targetUserId)
+  if (!user) return null
+
+  const clerk = getClerkClient()
+  const signInToken = await clerk.signInTokens.createSignInToken({
+    userId: user.clerkId,
+    expiresInSeconds: 300,
+  })
+
+  return signInToken.token
+}

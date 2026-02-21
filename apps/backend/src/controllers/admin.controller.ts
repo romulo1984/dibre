@@ -45,3 +45,20 @@ export async function deleteUser(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Failed to delete user' })
   }
 }
+
+export async function impersonate(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params
+
+    const token = await adminService.impersonateUser(id)
+    if (!token) {
+      res.status(404).json({ error: 'User not found' })
+      return
+    }
+
+    res.json({ token })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to create impersonation token' })
+  }
+}
