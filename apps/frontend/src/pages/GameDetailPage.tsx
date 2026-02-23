@@ -7,10 +7,9 @@ import { Card } from '@/components/ui/Card/Card'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog'
 import { TeamStatsCard } from '@/features/games/TeamStatsCard'
 import { TeamColorPicker } from '@/features/games/TeamColorPicker'
-import { PlayerRow } from '@/features/players/PlayerRow'
+import { PlayerSelectList } from '@/features/players/PlayerSelectList'
 import { ShimmerButton } from '@/components/magicui/shimmer-button'
 import { BlurFade } from '@/components/magicui/blur-fade'
-import { cn } from '@/lib/utils'
 import {
   getGame,
   getGamePlayers,
@@ -29,6 +28,7 @@ import type { Game, TeamAssignment, Player, Group } from '@/domain/types'
 function formatTeamsForShare(
   teams: TeamAssignment[],
   playersMap: Map<string, Player>,
+  gameId: string,
   teamColorsMap?: Record<string, string> | null,
 ): string {
   const starsEmoji = (n: number) => '⭐'.repeat(n)
@@ -50,6 +50,8 @@ function formatTeamsForShare(
     )
     lines.push('')
   })
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://dib.re'
+  lines.push(`🔗 ${appUrl}/games/${gameId}`)
   return lines.join('\n')
 }
 
@@ -163,6 +165,26 @@ export function GameDetailPage() {
 
   const isOwner = game?.isOwner ?? false
   const activePlayers = allPlayers.filter((p) => !p.deletedAt)
+  const [playerSaving, setPlayerSaving] = useState(false)
+
+  const handleTogglePlayer = (playerId: string) => {
+    const next = playerIds.includes(playerId)
+      ? playerIds.filter((pid) => pid !== playerId)
+      : [...playerIds, playerId]
+    setPlayerSaving(true)
+    handleSetPlayers(next).finally(() => setPlayerSaving(false))
+  }
+
+  const handleSelectAllPlayers = () => {
+    const next = activePlayers.map((p) => p.id)
+    setPlayerSaving(true)
+    handleSetPlayers(next).finally(() => setPlayerSaving(false))
+  }
+
+  const handleDeselectAllPlayers = () => {
+    setPlayerSaving(true)
+    handleSetPlayers([]).finally(() => setPlayerSaving(false))
+  }
 
   const handleDeleteGame = async () => {
     if (!id) return
@@ -308,10 +330,22 @@ export function GameDetailPage() {
               </div>
             </Card.Header>
             <Card.Content>
-              <GamePlayerSelect
-                allPlayers={activePlayers}
+              <PlayerSelectList
+                players={activePlayers}
                 selectedIds={playerIds}
-                onChange={handleSetPlayers}
+                onToggle={handleTogglePlayer}
+                onSelectAll={handleSelectAllPlayers}
+                onDeselectAll={handleDeselectAllPlayers}
+                disabled={playerSaving}
+                emptyMessage={
+                  <p className="text-sm text-[var(--text-tertiary)]">
+                    Nenhum jogador cadastrado.{' '}
+                    <Link to="/players/new" className="text-[var(--color-brand-600)] underline">
+                      Cadastre jogadores
+                    </Link>{' '}
+                    primeiro.
+                  </p>
+                }
               />
             </Card.Content>
           </Card.Root>
@@ -372,7 +406,7 @@ export function GameDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
+                      const text = formatTeamsForShare(teams, playersMap, id, game.teamColors)
                       navigator.clipboard.writeText(text).then(() => {
                         setCopied(true)
                         setTimeout(() => setCopied(false), 2000)
@@ -392,7 +426,7 @@ export function GameDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
+                      const text = formatTeamsForShare(teams, playersMap, id, game.teamColors)
                       navigator.share({ text }).catch(() => {})
                     }}
                   >
@@ -441,102 +475,3 @@ export function GameDetailPage() {
   )
 }
 
-/* ── Internal: Player checkbox selector (lista vertical, avatar, selecionar todos) ── */
-
-function GamePlayerSelect({
-  allPlayers,
-  selectedIds,
-  onChange,
-}: {
-  allPlayers: Player[]
-  selectedIds: string[]
-  onChange: (ids: string[]) => Promise<void>
-}) {
-  const [saving, setSaving] = useState(false)
-  const allSelected = allPlayers.length > 0 && selectedIds.length === allPlayers.length
-
-  const toggle = (playerId: string) => {
-    const next = selectedIds.includes(playerId)
-      ? selectedIds.filter((pid) => pid !== playerId)
-      : [...selectedIds, playerId]
-    setSaving(true)
-    onChange(next).finally(() => setSaving(false))
-  }
-
-  const selectAll = () => {
-    const next = allPlayers.map((p) => p.id)
-    setSaving(true)
-    onChange(next).finally(() => setSaving(false))
-  }
-
-  const deselectAll = () => {
-    setSaving(true)
-    onChange([]).finally(() => setSaving(false))
-  }
-
-  return (
-    <div className="space-y-3">
-      {allPlayers.length > 0 && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={allSelected ? deselectAll : selectAll}
-            className={cn(
-              'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
-              allSelected
-                ? 'border-[var(--border-primary)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)]'
-                : 'border-[var(--color-brand-500)] bg-[var(--color-brand-50)] text-[var(--color-brand-700)] hover:bg-[var(--color-brand-100)]',
-              saving && 'opacity-60'
-            )}
-          >
-            {allSelected ? 'Desmarcar todos' : 'Selecionar todos'}
-          </button>
-        </div>
-      )}
-      <ul className="flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto rounded-lg border border-[var(--border-primary)] p-1 sm:max-h-[320px] sm:p-1.5">
-        {allPlayers.map((p) => {
-          const isSelected = selectedIds.includes(p.id)
-          return (
-            <li key={p.id}>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => toggle(p.id)}
-                className={cn(
-                  'w-full cursor-pointer rounded-lg text-left transition-colors',
-                  isSelected
-                    ? 'bg-[var(--color-brand-50)] hover:bg-[var(--color-brand-100)] dark:bg-[var(--color-brand-900)]'
-                    : 'hover:bg-[var(--surface-tertiary)]',
-                  saving && 'opacity-60'
-                )}
-              >
-                <PlayerRow player={p}>
-                  <span
-                    className={cn(
-                      'flex size-5 shrink-0 items-center justify-center rounded border text-xs font-medium',
-                      isSelected
-                        ? 'border-[var(--color-brand-500)] bg-[var(--color-brand-500)] text-white'
-                        : 'border-[var(--border-primary)] bg-[var(--surface-primary)]'
-                    )}
-                  >
-                    {isSelected ? '✓' : ''}
-                  </span>
-                </PlayerRow>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-      {allPlayers.length === 0 && (
-        <p className="text-sm text-[var(--text-tertiary)]">
-          Nenhum jogador cadastrado.{' '}
-          <Link to="/players/new" className="text-[var(--color-brand-600)] underline">
-            Cadastre jogadores
-          </Link>{' '}
-          primeiro.
-        </p>
-      )}
-    </div>
-  )
-}
