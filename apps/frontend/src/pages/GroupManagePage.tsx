@@ -28,8 +28,7 @@ import type {
   GroupAvailablePlayer,
   Game,
 } from '@/domain/types'
-import { PlayerAvatar } from '@/features/players/PlayerAvatar'
-import { Stars } from '@/components/ui/Stars/Stars'
+import { PlayerSelectList } from '@/features/players/PlayerSelectList'
 
 export function GroupManagePage() {
   const { id } = useParams<{ id: string }>()
@@ -62,7 +61,6 @@ export function GroupManagePage() {
   const [availablePlayers, setAvailablePlayers] = useState<GroupAvailablePlayer[]>([])
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set())
   const [initialPlayerIds, setInitialPlayerIds] = useState<Set<string>>(new Set())
-  const [playerSearch, setPlayerSearch] = useState('')
   const [playerSaving, setPlayerSaving] = useState(false)
   const [playerSaveResult, setPlayerSaveResult] = useState<{
     type: 'success' | 'error'
@@ -216,12 +214,6 @@ export function GroupManagePage() {
   const playersChanged =
     selectedPlayerIds.size !== initialPlayerIds.size ||
     [...selectedPlayerIds].some((id) => !initialPlayerIds.has(id))
-
-  const filteredPlayers = playerSearch.trim()
-    ? availablePlayers.filter((p) =>
-        p.name.toLowerCase().includes(playerSearch.trim().toLowerCase())
-      )
-    : availablePlayers
 
   async function handleSavePlayers() {
     if (!id) return
@@ -493,76 +485,30 @@ export function GroupManagePage() {
             ) : undefined
           }
         >
-          {availablePlayers.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">
-              Você ainda não criou nenhum jogador.{' '}
-              <Link
-                to="/players/new"
-                className="font-medium text-[var(--color-brand-600)] hover:underline"
-              >
-                Criar jogador
-              </Link>
-            </p>
-          ) : (
-            <div>
-              <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-primary)] px-4 py-3">
-                <input
-                  type="text"
-                  value={playerSearch}
-                  onChange={(e) => setPlayerSearch(e.target.value)}
-                  placeholder="Buscar jogador..."
-                  className="min-w-0 flex-1 rounded-[var(--radius-lg)] border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--color-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]/20"
-                />
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={handleSelectAllPlayers}
-                    className="rounded-[var(--radius-md)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-brand-600)] transition-colors hover:bg-[var(--color-brand-50)] dark:hover:bg-[var(--color-brand-900)]/20"
+          <div className="p-4">
+            <PlayerSelectList
+              players={availablePlayers}
+              selectedIds={[...selectedPlayerIds]}
+              onToggle={handleTogglePlayer}
+              onSelectAll={handleSelectAllPlayers}
+              onDeselectAll={handleDeselectAllPlayers}
+              disabled={playerSaving}
+              searchable
+              emptyMessage={
+                <p className="text-sm text-[var(--text-tertiary)]">
+                  Você ainda não criou nenhum jogador.{' '}
+                  <Link
+                    to="/players/new"
+                    className="font-medium text-[var(--color-brand-600)] hover:underline"
                   >
-                    Selecionar todos
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeselectAllPlayers}
-                    className="rounded-[var(--radius-md)] px-2.5 py-1.5 text-xs font-medium text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-tertiary)]"
-                  >
-                    Desmarcar todos
-                  </button>
-                </div>
-              </div>
+                    Criar jogador
+                  </Link>
+                </p>
+              }
+            />
 
-              <div className="max-h-80 divide-y divide-[var(--border-primary)] overflow-y-auto">
-                {filteredPlayers.map((player) => {
-                  const isSelected = selectedPlayerIds.has(player.id)
-                  return (
-                    <label
-                      key={player.id}
-                      className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--surface-secondary)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleTogglePlayer(player.id)}
-                        className="size-4 shrink-0 rounded border-[var(--border-primary)] text-[var(--color-brand-500)] accent-[var(--color-brand-500)]"
-                      />
-                      <PlayerAvatar player={player} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
-                          {player.name}
-                        </p>
-                      </div>
-                      <Stars value={player.stars} size="sm" />
-                    </label>
-                  )
-                })}
-                {filteredPlayers.length === 0 && playerSearch.trim() && (
-                  <p className="px-4 py-4 text-center text-sm text-[var(--text-tertiary)]">
-                    Nenhum jogador encontrado.
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between gap-3 border-t border-[var(--border-primary)] px-4 py-3">
+            {availablePlayers.length > 0 && (
+              <div className="mt-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {playerSaveResult && (
                     <p
@@ -587,8 +533,8 @@ export function GroupManagePage() {
                   Salvar alterações
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </Section>
       </BlurFade>
 
