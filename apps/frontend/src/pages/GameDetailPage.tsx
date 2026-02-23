@@ -28,6 +28,7 @@ import type { Game, TeamAssignment, Player, Group } from '@/domain/types'
 function formatTeamsForShare(
   teams: TeamAssignment[],
   playersMap: Map<string, Player>,
+  gameId: string,
   teamColorsMap?: Record<string, string> | null,
 ): string {
   const starsEmoji = (n: number) => '⭐'.repeat(n)
@@ -49,6 +50,8 @@ function formatTeamsForShare(
     )
     lines.push('')
   })
+  const appUrl = import.meta.env.VITE_APP_URL || 'https://dib.re'
+  lines.push(`🔗 ${appUrl}/games/${gameId}`)
   return lines.join('\n')
 }
 
@@ -403,7 +406,7 @@ export function GameDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
+                      const text = formatTeamsForShare(teams, playersMap, id, game.teamColors)
                       navigator.clipboard.writeText(text).then(() => {
                         setCopied(true)
                         setTimeout(() => setCopied(false), 2000)
@@ -423,7 +426,7 @@ export function GameDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const text = formatTeamsForShare(teams, playersMap, game.teamColors)
+                      const text = formatTeamsForShare(teams, playersMap, id, game.teamColors)
                       navigator.share({ text }).catch(() => {})
                     }}
                   >

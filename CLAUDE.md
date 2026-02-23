@@ -38,7 +38,7 @@ There are no tests configured in this project.
 
 **`apps/backend/.env`**: `DATABASE_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `FRONTEND_URL`, `PORT`
 
-**`apps/frontend/.env`**: `VITE_CLERK_PUBLISHABLE_KEY`
+**`apps/frontend/.env`**: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_APP_URL` (public domain for share links, defaults to `https://dib.re`)
 
 ## Architecture
 
