@@ -117,6 +117,45 @@ export async function getPlayers(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function getAvailablePlayers(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params
+    const userId = res.locals.userId as string
+    const result = await groupService.getAvailablePlayers(id, userId)
+    if (result.error) {
+      const status = result.error === 'Not authorized' ? 403 : 404
+      res.status(status).json({ error: result.error })
+      return
+    }
+    res.json(result.players)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to get available players' })
+  }
+}
+
+export async function syncPlayers(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params
+    const { playerIds } = req.body as { playerIds: string[] }
+    if (!Array.isArray(playerIds)) {
+      res.status(400).json({ error: 'playerIds must be an array' })
+      return
+    }
+    const userId = res.locals.userId as string
+    const result = await groupService.syncGroupPlayers(id, playerIds, userId)
+    if (result.error) {
+      const status = result.error === 'Not authorized' ? 403 : 404
+      res.status(status).json({ error: result.error })
+      return
+    }
+    res.status(204).send()
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Failed to sync group players' })
+  }
+}
+
 export async function getGames(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params

@@ -2,6 +2,7 @@ import * as groupRepo from '../repositories/group.repository.js'
 import * as notifRepo from '../repositories/notification.repository.js'
 import * as playerRepo from '../repositories/player.repository.js'
 import * as gameRepo from '../repositories/game.repository.js'
+import * as groupPlayerRepo from '../repositories/group-player.repository.js'
 import type {
   GroupEntity,
   GroupMemberEntity,
@@ -10,6 +11,7 @@ import type {
   UserSummary,
 } from '../domain/group.js'
 import type { PlayerEntity } from '../domain/player.js'
+import type { AvailablePlayer } from '../repositories/group-player.repository.js'
 import type { GameEntity } from '../domain/game.js'
 
 // ── Create Group ──────────────────────────────────────────────────────────────
@@ -84,8 +86,37 @@ export async function getGroupPlayers(
   const isOwner = group.ownerId === viewerUserId
   if (!isOwner && !isMember) return { error: 'Access denied' }
 
-  const players = await playerRepo.findAllPlayersByOwner(group.ownerId)
-  return { players: players.filter((p) => !p.deletedAt) }
+  const players = await groupPlayerRepo.findGroupPlayers(groupId)
+  return { players }
+}
+
+export async function getAvailablePlayers(
+  groupId: string,
+  requesterId: string
+): Promise<{ error?: string; players?: AvailablePlayer[] }> {
+  const group = await groupRepo.findGroupById(groupId)
+  if (!group) return { error: 'Group not found' }
+  if (group.ownerId !== requesterId) return { error: 'Not authorized' }
+
+  const players = await groupPlayerRepo.findAvailablePlayers(groupId, group.ownerId)
+  return { players }
+}
+
+export async function syncGroupPlayers(
+  groupId: string,
+  playerIds: string[],
+  requesterId: string
+): Promise<{ error?: string; ok?: boolean }> {
+  const group = await groupRepo.findGroupById(groupId)
+  if (!group) return { error: 'Group not found' }
+  if (group.ownerId !== requesterId) return { error: 'Not authorized' }
+
+  const ownerPlayers = await playerRepo.findAllPlayersByOwner(group.ownerId)
+  const validIds = new Set(ownerPlayers.filter((p) => !p.deletedAt).map((p) => p.id))
+  const filtered = playerIds.filter((id) => validIds.has(id))
+
+  await groupPlayerRepo.syncGroupPlayers(groupId, filtered)
+  return { ok: true }
 }
 
 export async function getGroupGames(

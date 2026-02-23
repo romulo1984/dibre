@@ -5,6 +5,7 @@ import type {
   GroupJoinRequest,
   GroupInvitation,
   GroupMembersWithPendingResponse,
+  GroupAvailablePlayer,
   UserSummary,
 } from '@/domain/types'
 import type { Player, Game } from '@/domain/types'
@@ -47,6 +48,21 @@ export async function getGroupPlayers(id: string, token: string): Promise<Player
 
 export async function getGroupGames(id: string, token: string): Promise<Game[]> {
   return api.get<Game[]>(`/groups/${id}/games`, token)
+}
+
+export async function getAvailablePlayers(
+  groupId: string,
+  token: string
+): Promise<GroupAvailablePlayer[]> {
+  return api.get<GroupAvailablePlayer[]>(`/groups/${groupId}/available-players`, token)
+}
+
+export async function syncGroupPlayers(
+  groupId: string,
+  playerIds: string[],
+  token: string
+): Promise<void> {
+  return api.put<void>(`/groups/${groupId}/players`, { playerIds }, token)
 }
 
 // ── Members ───────────────────────────────────────────────────────────────────

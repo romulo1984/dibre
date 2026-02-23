@@ -41,6 +41,8 @@ router.delete('/groups/:id', requireAuth, groupsController.remove)
 
 // Group content (players/games visible to members)
 router.get('/groups/:id/players', requireAuth, groupsController.getPlayers)
+router.get('/groups/:id/available-players', requireAuth, groupsController.getAvailablePlayers)
+router.put('/groups/:id/players', requireAuth, groupsController.syncPlayers)
 router.get('/groups/:id/games', requireAuth, groupsController.getGames)
 
 // Group members

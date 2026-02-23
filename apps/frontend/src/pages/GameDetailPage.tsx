@@ -22,7 +22,7 @@ import {
   updateGame,
 } from '@/services/games.service'
 import { listPlayers } from '@/services/players.service'
-import { listGroups } from '@/services/groups.service'
+import { listGroups, getGroupPlayers } from '@/services/groups.service'
 import { getVestColor } from '@/domain/vestColors'
 import type { Game, TeamAssignment, Player, Group } from '@/domain/types'
 
@@ -94,14 +94,22 @@ export function GameDetailPage() {
         setTeamColors(g.teamColors ?? {})
 
         if (g.isOwner) {
-          const [players, groupsData] = await Promise.all([listPlayers(token), listGroups(token)])
-          if (!cancelled) {
-            setAllPlayers(players)
-            setOwnedGroups(
-              groupsData.groups.filter(
-                (gr) => gr.ownerId === groupsData.currentUserId && !gr.deletedAt
-              )
-            )
+          const [allOwnerPlayers, groupsData] = await Promise.all([
+            listPlayers(token),
+            listGroups(token),
+          ])
+          if (cancelled) return
+
+          const owned = groupsData.groups.filter(
+            (gr) => gr.ownerId === groupsData.currentUserId && !gr.deletedAt
+          )
+          setOwnedGroups(owned)
+
+          if (g.groupId) {
+            const groupPlayers = await getGroupPlayers(g.groupId, token)
+            if (!cancelled) setAllPlayers(groupPlayers)
+          } else {
+            setAllPlayers(allOwnerPlayers)
           }
         }
       })
@@ -123,12 +131,29 @@ export function GameDetailPage() {
       const token = await getToken()
       if (!token) return
       const colorsToSend = Object.keys(teamColors).length > 0 ? teamColors : null
+      const groupChanged = selectedGroupId !== (game?.groupId ?? null)
       const updated = await updateGame(
         id,
         { groupId: selectedGroupId, teamColors: colorsToSend },
         token,
       )
       setGame((prev) => (prev ? { ...prev, ...updated } : updated))
+
+      if (groupChanged) {
+        if (selectedGroupId) {
+          const groupPlayers = await getGroupPlayers(selectedGroupId, token)
+          setAllPlayers(groupPlayers)
+          const validIds = new Set(groupPlayers.map((p) => p.id))
+          const filtered = playerIds.filter((pid) => validIds.has(pid))
+          if (filtered.length !== playerIds.length) {
+            await setGamePlayers(id, filtered, token)
+            setPlayerIds(filtered)
+          }
+        } else {
+          const players = await listPlayers(token)
+          setAllPlayers(players)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar')
     } finally {
