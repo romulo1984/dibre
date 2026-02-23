@@ -63,7 +63,8 @@ model Player {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime? // soft delete
-  participations GamePlayer[]
+  participations   GamePlayer[]
+  groupAssignments GroupPlayer[]
   @@index([createdById])
 }
 
@@ -133,6 +134,7 @@ model Group {
   invitations   GroupInvitation[]
   notifications Notification[]
   games         Game[]
+  groupPlayers  GroupPlayer[]
 
   @@index([ownerId])
 }
@@ -183,6 +185,20 @@ model GroupInvitation {
   @@unique([groupId, invitedUserId])
   @@index([groupId])
   @@index([invitedUserId])
+}
+
+model GroupPlayer {
+  id        String   @id @default(cuid())
+  groupId   String
+  playerId  String
+  addedAt   DateTime @default(now())
+
+  group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, playerId])
+  @@index([groupId])
+  @@index([playerId])
 }
 
 // ── Notifications ────────────────────────────────────────────────────────────

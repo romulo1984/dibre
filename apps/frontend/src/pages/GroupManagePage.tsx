@@ -16,6 +16,8 @@ import {
   getGroupOwnerGames,
   assignGameToGroup,
   removeGameFromGroup,
+  getAvailablePlayers,
+  syncGroupPlayers,
 } from '@/services/groups.service'
 import type {
   Group,
@@ -23,8 +25,11 @@ import type {
   GroupMember,
   GroupJoinRequest,
   GroupInvitation,
+  GroupAvailablePlayer,
   Game,
 } from '@/domain/types'
+import { PlayerAvatar } from '@/features/players/PlayerAvatar'
+import { Stars } from '@/components/ui/Stars/Stars'
 
 export function GroupManagePage() {
   const { id } = useParams<{ id: string }>()
@@ -54,15 +59,26 @@ export function GroupManagePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
+  const [availablePlayers, setAvailablePlayers] = useState<GroupAvailablePlayer[]>([])
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set())
+  const [initialPlayerIds, setInitialPlayerIds] = useState<Set<string>>(new Set())
+  const [playerSearch, setPlayerSearch] = useState('')
+  const [playerSaving, setPlayerSaving] = useState(false)
+  const [playerSaveResult, setPlayerSaveResult] = useState<{
+    type: 'success' | 'error'
+    msg: string
+  } | null>(null)
+
   const fetchData = useCallback(async () => {
     if (!id) return
     const token = await getToken()
     if (!token) return
-    const [groupData, requestsData, membersData, gamesData] = await Promise.all([
+    const [groupData, requestsData, membersData, gamesData, playersData] = await Promise.all([
       getGroup(id, token),
       getJoinRequests(id, token).catch(() => [] as GroupJoinRequest[]),
       getGroupMembersWithPending(id, token).catch(() => ({ members: [], pendingInvitations: [] })),
       getGroupOwnerGames(id, token).catch(() => [] as Game[]),
+      getAvailablePlayers(id, token).catch(() => [] as GroupAvailablePlayer[]),
     ])
     setGroup(groupData.group)
     setMembership(groupData.membership)
@@ -70,6 +86,10 @@ export function GroupManagePage() {
     setMembers(membersData.members)
     setPendingInvitations(membersData.pendingInvitations)
     setOwnerGames(gamesData)
+    setAvailablePlayers(playersData)
+    const inGroup = new Set(playersData.filter((p) => p.isInGroup).map((p) => p.id))
+    setSelectedPlayerIds(inGroup)
+    setInitialPlayerIds(inGroup)
   }, [id, getToken])
 
   useEffect(() => {
@@ -167,6 +187,59 @@ export function GroupManagePage() {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar pelada')
     } finally {
       setGameToggleLoading(null)
+    }
+  }
+
+  function handleTogglePlayer(playerId: string) {
+    setPlayerSaveResult(null)
+    setSelectedPlayerIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(playerId)) {
+        next.delete(playerId)
+      } else {
+        next.add(playerId)
+      }
+      return next
+    })
+  }
+
+  function handleSelectAllPlayers() {
+    setPlayerSaveResult(null)
+    setSelectedPlayerIds(new Set(availablePlayers.map((p) => p.id)))
+  }
+
+  function handleDeselectAllPlayers() {
+    setPlayerSaveResult(null)
+    setSelectedPlayerIds(new Set())
+  }
+
+  const playersChanged =
+    selectedPlayerIds.size !== initialPlayerIds.size ||
+    [...selectedPlayerIds].some((id) => !initialPlayerIds.has(id))
+
+  const filteredPlayers = playerSearch.trim()
+    ? availablePlayers.filter((p) =>
+        p.name.toLowerCase().includes(playerSearch.trim().toLowerCase())
+      )
+    : availablePlayers
+
+  async function handleSavePlayers() {
+    if (!id) return
+    setPlayerSaving(true)
+    setPlayerSaveResult(null)
+    try {
+      const token = await getToken()
+      if (!token) return
+      await syncGroupPlayers(id, [...selectedPlayerIds], token)
+      setInitialPlayerIds(new Set(selectedPlayerIds))
+      setPlayerSaveResult({ type: 'success', msg: 'Jogadores atualizados com sucesso!' })
+    } catch (err) {
+      setPlayerSaveResult({
+        type: 'error',
+        msg: err instanceof Error ? err.message : 'Erro ao salvar jogadores',
+      })
+    } finally {
+      setPlayerSaving(false)
     }
   }
 
@@ -408,8 +481,119 @@ export function GroupManagePage() {
         </Section>
       </BlurFade>
 
-      {/* Game assignment */}
+      {/* Player selection */}
       <BlurFade delay={0.25}>
+        <Section
+          title="Jogadores do grupo"
+          badge={
+            availablePlayers.length > 0 ? (
+              <span className="text-xs text-[var(--text-tertiary)]">
+                {selectedPlayerIds.size} de {availablePlayers.length} selecionados
+              </span>
+            ) : undefined
+          }
+        >
+          {availablePlayers.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">
+              Você ainda não criou nenhum jogador.{' '}
+              <Link
+                to="/players/new"
+                className="font-medium text-[var(--color-brand-600)] hover:underline"
+              >
+                Criar jogador
+              </Link>
+            </p>
+          ) : (
+            <div>
+              <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-primary)] px-4 py-3">
+                <input
+                  type="text"
+                  value={playerSearch}
+                  onChange={(e) => setPlayerSearch(e.target.value)}
+                  placeholder="Buscar jogador..."
+                  className="min-w-0 flex-1 rounded-[var(--radius-lg)] border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--color-brand-500)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)]/20"
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllPlayers}
+                    className="rounded-[var(--radius-md)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-brand-600)] transition-colors hover:bg-[var(--color-brand-50)] dark:hover:bg-[var(--color-brand-900)]/20"
+                  >
+                    Selecionar todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeselectAllPlayers}
+                    className="rounded-[var(--radius-md)] px-2.5 py-1.5 text-xs font-medium text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-tertiary)]"
+                  >
+                    Desmarcar todos
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-h-80 divide-y divide-[var(--border-primary)] overflow-y-auto">
+                {filteredPlayers.map((player) => {
+                  const isSelected = selectedPlayerIds.has(player.id)
+                  return (
+                    <label
+                      key={player.id}
+                      className="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--surface-secondary)]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleTogglePlayer(player.id)}
+                        className="size-4 shrink-0 rounded border-[var(--border-primary)] text-[var(--color-brand-500)] accent-[var(--color-brand-500)]"
+                      />
+                      <PlayerAvatar player={player} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
+                          {player.name}
+                        </p>
+                      </div>
+                      <Stars value={player.stars} size="sm" />
+                    </label>
+                  )
+                })}
+                {filteredPlayers.length === 0 && playerSearch.trim() && (
+                  <p className="px-4 py-4 text-center text-sm text-[var(--text-tertiary)]">
+                    Nenhum jogador encontrado.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 border-t border-[var(--border-primary)] px-4 py-3">
+                <div className="min-w-0">
+                  {playerSaveResult && (
+                    <p
+                      className={`text-sm ${
+                        playerSaveResult.type === 'success'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}
+                    >
+                      {playerSaveResult.msg}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!playersChanged}
+                  loading={playerSaving}
+                  onClick={handleSavePlayers}
+                  className="shrink-0"
+                >
+                  Salvar alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </Section>
+      </BlurFade>
+
+      {/* Game assignment */}
+      <BlurFade delay={0.3}>
         <Section
           title="Peladas do grupo"
           badge={
@@ -470,7 +654,7 @@ export function GroupManagePage() {
       </BlurFade>
 
       {/* Danger zone */}
-      <BlurFade delay={0.3}>
+      <BlurFade delay={0.35}>
         <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-red-500">
             Zona perigosa

@@ -174,6 +174,10 @@ export interface GroupInvitation {
   }
 }
 
+export interface GroupAvailablePlayer extends Player {
+  isInGroup: boolean
+}
+
 export interface GroupMembersWithPendingResponse {
   members: GroupMember[]
   pendingInvitations: GroupInvitation[]

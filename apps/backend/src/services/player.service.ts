@@ -3,6 +3,7 @@ import { STAR_MIN, STAR_MAX, validateAttributes } from '../domain/player.js'
 import * as gameRepo from '../repositories/game.repository.js'
 import * as playerRepo from '../repositories/player.repository.js'
 import * as groupRepo from '../repositories/group.repository.js'
+import * as groupPlayerRepo from '../repositories/group-player.repository.js'
 
 export interface PlayerProfileGame {
   id: string
@@ -133,6 +134,9 @@ export async function createPlayer(
     createdById: ownerId,
     ...attrs,
   })
+
+  await groupPlayerRepo.addNewPlayerToOwnerGroups(player.id, ownerId)
+
   return { player }
 }
 
@@ -278,12 +282,13 @@ export async function importPlayers(
     }
 
     try {
-      await playerRepo.createPlayer({
+      const imported = await playerRepo.createPlayer({
         name,
         avatarUrl,
         createdById: ownerId,
         ...attrs,
       })
+      await groupPlayerRepo.addNewPlayerToOwnerGroups(imported.id, ownerId)
       result.imported++
       result.players.push({ name, ...attrs })
     } catch (err) {

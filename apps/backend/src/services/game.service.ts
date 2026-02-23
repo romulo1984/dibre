@@ -4,6 +4,7 @@ import type { PlayerEntity } from '../domain/player.js'
 import * as gameRepo from '../repositories/game.repository.js'
 import * as playerRepo from '../repositories/player.repository.js'
 import * as groupRepo from '../repositories/group.repository.js'
+import * as groupPlayerRepo from '../repositories/group-player.repository.js'
 import { drawBalancedTeams } from './balance.service.js'
 
 /**
@@ -81,6 +82,14 @@ export async function setGamePlayers(
 ): Promise<{ error?: string }> {
   const game = await gameRepo.findGameByIdForOwner(gameId, ownerId)
   if (!game) return { error: 'Game not found' }
+
+  if (game.groupId) {
+    const groupPlayers = await groupPlayerRepo.findGroupPlayers(game.groupId)
+    const validIds = new Set(groupPlayers.map((p) => p.id))
+    const hasInvalid = playerIds.some((id) => !validIds.has(id))
+    if (hasInvalid) return { error: 'Some players are not available in this group' }
+  }
+
   await gameRepo.setGamePlayers(gameId, playerIds)
   return {}
 }
